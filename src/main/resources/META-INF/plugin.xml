@@ -9,10 +9,10 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
+                id="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
+                displayName="Backlog"/>
     </extensions>
-
-    <applicationListeners>
-        <listener class="com.github.badfalcon.backlog.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
 </idea-plugin>
