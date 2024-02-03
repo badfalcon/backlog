@@ -2,6 +2,7 @@ package com.github.badfalcon.backlog.config
 
 
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent

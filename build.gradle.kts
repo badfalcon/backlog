@@ -16,6 +16,10 @@ plugins {
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+}
+
 // Configure project's dependencies
 repositories {
     mavenCentral()
@@ -24,6 +28,9 @@ repositories {
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
 //    implementation(libs.annotations)
+    implementation ("com.nulab-inc:backlog4j:2.6.0")
+    implementation ("org.slf4j:slf4j-api:1.7.36")
+    implementation ("org.slf4j:slf4j-simple:1.7.36") // 例えばslf4j-simpleを追加することでStaticLoggerBinderが解決される場合があります
 }
 
 // Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.

@@ -4,15 +4,20 @@
     <name>backlog Template</name>
     <vendor>badfalcon</vendor>
 
+    <depends>Git4Idea</depends>
     <depends>com.intellij.modules.platform</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+        <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory" id="BacklogPullRequestCheck"/>
+        <applicationService
+                serviceImplementation="com.github.badfalcon.backlog.config.MyPluginSettingsState"/>
         <applicationConfigurable
                 parentId="tools"
                 instance="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
                 id="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
                 displayName="Backlog"/>
+
     </extensions>
 </idea-plugin>

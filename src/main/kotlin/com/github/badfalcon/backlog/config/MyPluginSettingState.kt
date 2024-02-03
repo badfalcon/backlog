@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class MyPluginSettingsState : PersistentStateComponent<MyPluginSettingsState> {
     var workspaceName: String = ""
     var apiKey: String = ""
+    var projectName: String = ""
 
     companion object {
         fun getInstance(): MyPluginSettingsState {
