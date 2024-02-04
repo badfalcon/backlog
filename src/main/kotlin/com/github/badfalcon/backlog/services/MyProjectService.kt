@@ -9,6 +9,7 @@ import com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
@@ -23,6 +24,7 @@ import com.nulabinc.backlog4j.api.option.PullRequestQueryParams
 import com.nulabinc.backlog4j.conf.BacklogConfigure
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure
 import git4idea.GitUtil
+import git4idea.changes.GitChangeUtils
 import git4idea.fetch.GitFetchSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -112,5 +114,23 @@ class MyProjectService(project: Project) {
         return false
     }
 
+    fun fetch(){
+        if (repository != null){
+            val fetch = GitFetchSupport.fetchSupport(repository!!.project)
+            fetch.fetchAllRemotes(listOf(repository)).showNotificationIfFailed()
+        }
+    }
+
+    fun getDiff(baseRevision: String, targetRevision: String): MutableCollection<Change>? {
+        if (repository != null){
+            return GitChangeUtils.getDiff(
+                repository!!.project,
+                repository!!.root,
+                baseRevision,
+                targetRevision,
+                null);
+        }
+        return null
+    }
     fun getRandomNumber() = (1..100).random()
 }

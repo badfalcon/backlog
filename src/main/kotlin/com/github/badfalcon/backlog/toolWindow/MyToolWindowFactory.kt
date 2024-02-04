@@ -130,37 +130,29 @@ class MyToolWindowFactory : ToolWindowFactory {
                     pullRequestList.addListSelectionListener { e ->
                         if (!e.valueIsAdjusting) {
                             // todo create a new tab
+
+                            service.fetch()
                             val repository = service.repository!!
-                            val fetch = GitFetchSupport.fetchSupport(repository.project)
-                            val res = fetch.fetchAllRemotes(listOf(repository)).showNotificationIfFailed()
 
                             val selectedIndex = pullRequestList.selectedIndex
                             if (selectedIndex != -1) {
                                 // プルリクエストの詳細を表示
                                 val selectedPullRequest = pullRequests[selectedIndex]
 
-                                gitRepo.branches.findBranchByName(selectedPullRequest.base)
+                                // get remote branches
                                 val base = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.base }
-                                val baseBranch : GitBranch? = gitRepo.branches.findBranchByName(selectedPullRequest.base)
-
                                 val target = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.branch }
-                                val targetBranch : GitBranch? = gitRepo.branches.findBranchByName(selectedPullRequest.branch)
 
                                 if(base != null && target != null)
                                 {
+                                    // get revisions
                                     val revisionBase = GitRevisionNumber.resolve(repository.project, repository.root, base.name)
                                     val revisionTarget = GitRevisionNumber.resolve(repository.project, repository.root, target.name)
-                                    if(revisionBase != null && revisionTarget != null)
-                                    {
-                                        GlobalScope.launch(Dispatchers.IO) {
-                                            val changes = GitChangeUtils.getDiff(
-                                                repository.project,
-                                                repository.root,
-                                                revisionBase.rev,
-                                                revisionTarget.rev,
-                                                null);
-                                            withContext(Dispatchers.Main) {
-                                                // 変更を用いてGUIを更新します
+                                    GlobalScope.launch(Dispatchers.IO) {
+                                        val changes = service.getDiff(revisionBase.rev, revisionTarget.rev);
+                                        withContext(Dispatchers.Main) {
+                                            // 変更を用いてGUIを更新します
+                                            if (changes != null){
                                                 changes.forEach{
                                                     println(it.virtualFile?.name)
                                                     println(it.fileStatus.text)
