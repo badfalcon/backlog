@@ -29,7 +29,7 @@ repositories {
 dependencies {
 //    implementation(libs.annotations)
     implementation ("com.nulab-inc:backlog4j:2.6.0")
-    implementation ("org.slf4j:slf4j-api:1.7.36")
+    implementation ("org.slf4j:slf4j-api:2.0.12")
     implementation ("org.slf4j:slf4j-simple:1.7.36") // 例えばslf4j-simpleを追加することでStaticLoggerBinderが解決される場合があります
 }
 
