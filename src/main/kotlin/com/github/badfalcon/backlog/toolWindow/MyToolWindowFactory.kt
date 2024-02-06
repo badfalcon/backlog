@@ -18,10 +18,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.Repository
 import com.nulabinc.backlog4j.ResponseList
@@ -40,6 +42,9 @@ import javax.swing.JList
 
 
 class MyToolWindowFactory : ToolWindowFactory {
+    companion object {
+        const val TOOL_WINDOW_ID = "BacklogPullRequestCheck"
+    }
     init {
         thisLogger().warn("[BLPL]Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
     }
@@ -131,6 +136,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                         if (!e.valueIsAdjusting) {
                             // todo create a new tab
 
+
                             service.fetch()
                             val repository = service.repository!!
 
@@ -189,6 +195,21 @@ class MyToolWindowFactory : ToolWindowFactory {
                 println("[BLPL] VCS repository remote URL not found")
                 add(JBLabel("[BLPL] VCS repository remote URL not found"))
             }
+        }
+        fun addNewTab(project: Project) {
+            service.myToolWindow
+            val toolWindowManager = ToolWindowManager.getInstance(project)
+            var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow(MyToolWindowFactory.TOOL_WINDOW_ID)
+            if(service.myToolWindow != null){
+                val content = ContentFactory.getInstance().createContent(getDetailTabContent(), "NewTab", false)
+                val contentManager = toolWindow?.contentManager!!
+                contentManager.addContent(content)
+            }
+        }
+        fun getDetailTabContent() = JBPanel<JBPanel<*>>().apply{
+            thisLogger().debug("[BLPL]getDetailTabContent")
+            val label = JBLabel("detail tab loading")
+            add(label)
         }
     }
 }

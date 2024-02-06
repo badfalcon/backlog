@@ -88,7 +88,7 @@ class MyProjectService(project: Project) {
             ApplicationManager.getApplication().invokeLater {
                 thisLogger().debug("[BLPL]invokeLater")
                 // todo stop hard-coding
-                var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow("BacklogPullRequestCheck")
+                var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow(MyToolWindowFactory.TOOL_WINDOW_ID)
 
                 if(myToolWindow != null){
                     val content = ContentFactory.getInstance().createContent(myToolWindow!!.getContent(), null, false)
