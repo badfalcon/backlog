@@ -56,7 +56,7 @@ class MyToolWindowFactory : ToolWindowFactory {
         val service = toolWindow.project.service<MyProjectService>()
         service.myToolWindow = myToolWindow
 
-        val content = ContentFactory.getInstance().createContent(myToolWindow.getContent(), null, false)
+        val content = ContentFactory.getInstance().createContent(myToolWindow.getInitContent(), null, false)
         toolWindow.contentManager.addContent(content)
     }
 
@@ -76,6 +76,8 @@ class MyToolWindowFactory : ToolWindowFactory {
 
             }
         }
+
+        fun getInitContent() = jbPanel;
 
         fun getContent() = JBPanel<JBPanel<*>>().apply {
             thisLogger().debug("[BLPL]getContent")
