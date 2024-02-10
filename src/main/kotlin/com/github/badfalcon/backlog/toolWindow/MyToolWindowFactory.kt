@@ -60,15 +60,17 @@ class MyToolWindowFactory : ToolWindowFactory {
         toolWindow.contentManager.addContent(content)
     }
 
+
+
     override fun shouldBeAvailable(project: Project) = true
 
-    public class MyToolWindow(project: Project, toolWindow: ToolWindow) {
-
+    public class MyToolWindow(private var project: Project, toolWindow: ToolWindow) {
         private val service = toolWindow.project.service<MyProjectService>()
         private var jbPanel = JBPanel<JBPanel<*>>()
 
         init {
             // todo init時はLoadingを表示
+
             jbPanel = JBPanel<JBPanel<*>>().apply {
                 thisLogger().debug("[BLPL]getContent")
                 val label = JBLabel("loading")
@@ -135,52 +137,52 @@ class MyToolWindowFactory : ToolWindowFactory {
                     pullRequestList.addListSelectionListener { e ->
                         if (!e.valueIsAdjusting) {
                             // todo create a new tab
-
-
-                            service.fetch()
-                            val repository = service.repository!!
-
-                            val selectedIndex = pullRequestList.selectedIndex
-                            if (selectedIndex != -1) {
-                                // プルリクエストの詳細を表示
-                                val selectedPullRequest = pullRequests[selectedIndex]
-
-                                // get remote branches
-                                val base = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.base }
-                                val target = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.branch }
-
-                                if(base != null && target != null)
-                                {
-                                    // get revisions
-                                    val revisionBase = GitRevisionNumber.resolve(repository.project, repository.root, base.name)
-                                    val revisionTarget = GitRevisionNumber.resolve(repository.project, repository.root, target.name)
-                                    GlobalScope.launch(Dispatchers.IO) {
-                                        val changes = service.getDiff(revisionBase.rev, revisionTarget.rev);
-                                        withContext(Dispatchers.Main) {
-                                            // 変更を用いてGUIを更新します
-                                            if (changes != null){
-                                                changes.forEach{
-                                                    println(it.virtualFile?.name)
-                                                    println(it.fileStatus.text)
-                                                    val beforeRevision = it.beforeRevision?.content
-                                                    val afterRevision = it.afterRevision?.content
-
-                                                    // print the difference between the two revisions
-                                                    // this is a naive implementation and does not take into account line numbers or contextual differences
-                                                }
-                                                val change = changes.first()
-                                                val beforeRevision = change.beforeRevision?.content!!
-                                                val afterRevision = change.afterRevision?.content!!
-
-                                                val currentContent: DiffContent = DiffContentFactory.getInstance().create(beforeRevision)
-                                                val baseContent: DiffContent = DiffContentFactory.getInstance().create(afterRevision)
-                                                val request = SimpleDiffRequest(change.toString(),currentContent,baseContent,"a","b")
-                                                DiffManager.getInstance().showDiff(repository.project, request)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            addNewTab();
+                            // todo move to new tab
+//                            service.fetch()
+//                            val repository = service.repository!!
+//
+//                            val selectedIndex = pullRequestList.selectedIndex
+//                            if (selectedIndex != -1) {
+//                                // プルリクエストの詳細を表示
+//                                val selectedPullRequest = pullRequests[selectedIndex]
+//
+//                                // get remote branches
+//                                val base = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.base }
+//                                val target = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.branch }
+//
+//                                if(base != null && target != null)
+//                                {
+//                                    // get revisions
+//                                    val revisionBase = GitRevisionNumber.resolve(repository.project, repository.root, base.name)
+//                                    val revisionTarget = GitRevisionNumber.resolve(repository.project, repository.root, target.name)
+//                                    GlobalScope.launch(Dispatchers.IO) {
+//                                        val changes = service.getDiff(revisionBase.rev, revisionTarget.rev);
+//                                        withContext(Dispatchers.Main) {
+//                                            // 変更を用いてGUIを更新します
+//                                            if (changes != null){
+//                                                changes.forEach{
+//                                                    println(it.virtualFile?.name)
+//                                                    println(it.fileStatus.text)
+//                                                    val beforeRevision = it.beforeRevision?.content
+//                                                    val afterRevision = it.afterRevision?.content
+//
+//                                                    // print the difference between the two revisions
+//                                                    // this is a naive implementation and does not take into account line numbers or contextual differences
+//                                                }
+//                                                val change = changes.first()
+//                                                val beforeRevision = change.beforeRevision?.content!!
+//                                                val afterRevision = change.afterRevision?.content!!
+//
+//                                                val currentContent: DiffContent = DiffContentFactory.getInstance().create(beforeRevision)
+//                                                val baseContent: DiffContent = DiffContentFactory.getInstance().create(afterRevision)
+//                                                val request = SimpleDiffRequest(change.toString(),currentContent,baseContent,"a","b")
+//                                                DiffManager.getInstance().showDiff(repository.project, request)
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
                         }
                     }
 
@@ -196,7 +198,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                 add(JBLabel("[BLPL] VCS repository remote URL not found"))
             }
         }
-        fun addNewTab(project: Project) {
+        fun addNewTab() {
             service.myToolWindow
             val toolWindowManager = ToolWindowManager.getInstance(project)
             var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow(MyToolWindowFactory.TOOL_WINDOW_ID)
