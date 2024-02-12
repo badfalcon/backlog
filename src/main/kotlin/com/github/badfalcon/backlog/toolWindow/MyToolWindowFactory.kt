@@ -139,7 +139,11 @@ class MyToolWindowFactory : ToolWindowFactory {
                     pullRequestList.addListSelectionListener { e ->
                         if (!e.valueIsAdjusting) {
                             // todo create a new tab
-                            addNewTab();
+                            val selectedIndex = pullRequestList.selectedIndex
+                            if (selectedIndex != -1) {
+                                val selectedPullRequest = pullRequests[selectedIndex]
+                                addNewTab(selectedPullRequest.number);
+                            }
                             // todo move to new tab
 //                            service.fetch()
 //                            val repository = service.repository!!
@@ -200,12 +204,13 @@ class MyToolWindowFactory : ToolWindowFactory {
                 add(JBLabel("[BLPL] VCS repository remote URL not found"))
             }
         }
-        fun addNewTab() {
+
+        fun addNewTab(number: Long) {
             service.myToolWindow
             val toolWindowManager = ToolWindowManager.getInstance(project)
             var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow(MyToolWindowFactory.TOOL_WINDOW_ID)
             if(service.myToolWindow != null){
-                val content = ContentFactory.getInstance().createContent(getDetailTabContent(), "NewTab", false)
+                val content = ContentFactory.getInstance().createContent(getDetailTabContent(), number.toString(), false)
                 val contentManager = toolWindow?.contentManager!!
                 contentManager.addContent(content)
             }
