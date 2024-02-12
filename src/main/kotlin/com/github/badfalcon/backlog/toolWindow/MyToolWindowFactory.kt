@@ -56,7 +56,7 @@ class MyToolWindowFactory : ToolWindowFactory {
         val service = toolWindow.project.service<MyProjectService>()
         service.myToolWindow = myToolWindow
 
-        val content = ContentFactory.getInstance().createContent(myToolWindow.getInitContent(), null, false)
+        val content = ContentFactory.getInstance().createContent(myToolWindow.getInitContent(), MyBundle.message("toolWindowHomeTabTitle"), false)
         toolWindow.contentManager.addContent(content)
     }
 
