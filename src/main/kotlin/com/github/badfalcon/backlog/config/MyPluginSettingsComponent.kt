@@ -1,5 +1,6 @@
 package com.github.badfalcon.backlog.config
 
+import com.github.badfalcon.backlog.services.BacklogService
 import com.github.badfalcon.backlog.services.MyProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -77,10 +78,8 @@ class MyPluginSettingsComponent {
     private fun setupButtonAction() {
         myInputCheckButton.addActionListener {
             if(workspaceNameText != "" && apiKeyText != ""){
-                // todo check if values are valid
-                val defaultProject = ProjectManager.getInstance().defaultProject
-                val applicationService = defaultProject.service<MyProjectService>()
-                val isValid : Boolean = applicationService.testConfigValues(workspaceNameText, apiKeyText)
+                // check if the values are valid
+                val isValid : Boolean = service<BacklogService>().isValidBacklogConfigs(workspaceNameText, apiKeyText)
                 updateStatus(isValid);
             }
         }

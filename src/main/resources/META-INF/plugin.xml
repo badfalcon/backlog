@@ -11,8 +11,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory" id="BacklogPullRequestCheck"/>
-        <applicationService
-                serviceImplementation="com.github.badfalcon.backlog.config.MyPluginSettingsState"/>
+
         <applicationConfigurable
                 parentId="tools"
                 instance="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
