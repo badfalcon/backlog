@@ -18,10 +18,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManager
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.Repository
 import com.nulabinc.backlog4j.ResponseList
@@ -40,6 +42,9 @@ import javax.swing.JList
 
 
 class MyToolWindowFactory : ToolWindowFactory {
+    companion object {
+        const val TOOL_WINDOW_ID = "BacklogPullRequestCheck"
+    }
     init {
         thisLogger().warn("[BLPL]Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
     }
@@ -51,19 +56,21 @@ class MyToolWindowFactory : ToolWindowFactory {
         val service = toolWindow.project.service<MyProjectService>()
         service.myToolWindow = myToolWindow
 
-        val content = ContentFactory.getInstance().createContent(myToolWindow.getContent(), null, false)
+        val content = ContentFactory.getInstance().createContent(myToolWindow.getInitContent(), MyBundle.message("toolWindowHomeTabTitle"), false)
         toolWindow.contentManager.addContent(content)
     }
 
+
+
     override fun shouldBeAvailable(project: Project) = true
 
-    public class MyToolWindow(project: Project, toolWindow: ToolWindow) {
-
+    public class MyToolWindow(private var project: Project, toolWindow: ToolWindow) {
         private val service = toolWindow.project.service<MyProjectService>()
         private var jbPanel = JBPanel<JBPanel<*>>()
 
         init {
             // todo init時はLoadingを表示
+
             jbPanel = JBPanel<JBPanel<*>>().apply {
                 thisLogger().debug("[BLPL]getContent")
                 val label = JBLabel("loading")
@@ -71,6 +78,8 @@ class MyToolWindowFactory : ToolWindowFactory {
 
             }
         }
+
+        fun getInitContent() = jbPanel;
 
         fun getContent() = JBPanel<JBPanel<*>>().apply {
             thisLogger().debug("[BLPL]getContent")
@@ -130,51 +139,56 @@ class MyToolWindowFactory : ToolWindowFactory {
                     pullRequestList.addListSelectionListener { e ->
                         if (!e.valueIsAdjusting) {
                             // todo create a new tab
-
-                            service.fetch()
-                            val repository = service.repository!!
-
                             val selectedIndex = pullRequestList.selectedIndex
                             if (selectedIndex != -1) {
-                                // プルリクエストの詳細を表示
                                 val selectedPullRequest = pullRequests[selectedIndex]
-
-                                // get remote branches
-                                val base = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.base }
-                                val target = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.branch }
-
-                                if(base != null && target != null)
-                                {
-                                    // get revisions
-                                    val revisionBase = GitRevisionNumber.resolve(repository.project, repository.root, base.name)
-                                    val revisionTarget = GitRevisionNumber.resolve(repository.project, repository.root, target.name)
-                                    GlobalScope.launch(Dispatchers.IO) {
-                                        val changes = service.getDiff(revisionBase.rev, revisionTarget.rev);
-                                        withContext(Dispatchers.Main) {
-                                            // 変更を用いてGUIを更新します
-                                            if (changes != null){
-                                                changes.forEach{
-                                                    println(it.virtualFile?.name)
-                                                    println(it.fileStatus.text)
-                                                    val beforeRevision = it.beforeRevision?.content
-                                                    val afterRevision = it.afterRevision?.content
-
-                                                    // print the difference between the two revisions
-                                                    // this is a naive implementation and does not take into account line numbers or contextual differences
-                                                }
-                                                val change = changes.first()
-                                                val beforeRevision = change.beforeRevision?.content!!
-                                                val afterRevision = change.afterRevision?.content!!
-
-                                                val currentContent: DiffContent = DiffContentFactory.getInstance().create(beforeRevision)
-                                                val baseContent: DiffContent = DiffContentFactory.getInstance().create(afterRevision)
-                                                val request = SimpleDiffRequest(change.toString(),currentContent,baseContent,"a","b")
-                                                DiffManager.getInstance().showDiff(repository.project, request)
-                                            }
-                                        }
-                                    }
-                                }
+                                addNewTab(selectedPullRequest.number);
                             }
+                            // todo move to new tab
+//                            service.fetch()
+//                            val repository = service.repository!!
+//
+//                            val selectedIndex = pullRequestList.selectedIndex
+//                            if (selectedIndex != -1) {
+//                                // プルリクエストの詳細を表示
+//                                val selectedPullRequest = pullRequests[selectedIndex]
+//
+//                                // get remote branches
+//                                val base = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.base }
+//                                val target = gitRepo.branches.remoteBranches.first { it.nameForRemoteOperations == selectedPullRequest.branch }
+//
+//                                if(base != null && target != null)
+//                                {
+//                                    // get revisions
+//                                    val revisionBase = GitRevisionNumber.resolve(repository.project, repository.root, base.name)
+//                                    val revisionTarget = GitRevisionNumber.resolve(repository.project, repository.root, target.name)
+//                                    GlobalScope.launch(Dispatchers.IO) {
+//                                        val changes = service.getDiff(revisionBase.rev, revisionTarget.rev);
+//                                        withContext(Dispatchers.Main) {
+//                                            // 変更を用いてGUIを更新します
+//                                            if (changes != null){
+//                                                changes.forEach{
+//                                                    println(it.virtualFile?.name)
+//                                                    println(it.fileStatus.text)
+//                                                    val beforeRevision = it.beforeRevision?.content
+//                                                    val afterRevision = it.afterRevision?.content
+//
+//                                                    // print the difference between the two revisions
+//                                                    // this is a naive implementation and does not take into account line numbers or contextual differences
+//                                                }
+//                                                val change = changes.first()
+//                                                val beforeRevision = change.beforeRevision?.content!!
+//                                                val afterRevision = change.afterRevision?.content!!
+//
+//                                                val currentContent: DiffContent = DiffContentFactory.getInstance().create(beforeRevision)
+//                                                val baseContent: DiffContent = DiffContentFactory.getInstance().create(afterRevision)
+//                                                val request = SimpleDiffRequest(change.toString(),currentContent,baseContent,"a","b")
+//                                                DiffManager.getInstance().showDiff(repository.project, request)
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
                         }
                     }
 
@@ -189,6 +203,22 @@ class MyToolWindowFactory : ToolWindowFactory {
                 println("[BLPL] VCS repository remote URL not found")
                 add(JBLabel("[BLPL] VCS repository remote URL not found"))
             }
+        }
+
+        fun addNewTab(number: Long) {
+            service.myToolWindow
+            val toolWindowManager = ToolWindowManager.getInstance(project)
+            var toolWindow: ToolWindow? = toolWindowManager?.getToolWindow(MyToolWindowFactory.TOOL_WINDOW_ID)
+            if(service.myToolWindow != null){
+                val content = ContentFactory.getInstance().createContent(getDetailTabContent(), number.toString(), false)
+                val contentManager = toolWindow?.contentManager!!
+                contentManager.addContent(content)
+            }
+        }
+        fun getDetailTabContent() = JBPanel<JBPanel<*>>().apply{
+            thisLogger().debug("[BLPL]getDetailTabContent")
+            val label = JBLabel("detail tab loading")
+            add(label)
         }
     }
 }
