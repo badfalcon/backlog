@@ -30,7 +30,7 @@ dependencies {
 //    implementation(libs.annotations)
     implementation ("com.nulab-inc:backlog4j:2.6.0")
     implementation ("org.slf4j:slf4j-api:2.0.13")
-    implementation ("org.slf4j:slf4j-simple:2.0.12") // 例えばslf4j-simpleを追加することでStaticLoggerBinderが解決される場合があります
+    implementation ("org.slf4j:slf4j-simple:2.0.13") // 例えばslf4j-simpleを追加することでStaticLoggerBinderが解決される場合があります
 }
 
 // Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
