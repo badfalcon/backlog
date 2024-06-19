@@ -16,10 +16,6 @@ plugins {
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-}
-
 // Configure project's dependencies
 repositories {
     mavenCentral()
@@ -28,18 +24,13 @@ repositories {
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
 //    implementation(libs.annotations)
-    implementation ("com.nulab-inc:backlog4j:2.6.0")
-    implementation ("org.slf4j:slf4j-api:2.0.13")
-    implementation ("org.slf4j:slf4j-simple:2.0.13") // 例えばslf4j-simpleを追加することでStaticLoggerBinderが解決される場合があります
+    // com.nulab-inc:backlog4j:2.6.0
+    implementation("com.nulab-inc:backlog4j:2.6.0")
 }
 
-// Set the JVM language level used to build the project. Use Java 11 for 2020.3+, and Java 17 for 2022.2+.
+// Set the JVM language level used to build the project.
 kotlin {
-    @Suppress("UnstableApiUsage")
-    jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-        vendor = JvmVendorSpec.JETBRAINS
-    }
+    jvmToolchain(17)
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
@@ -56,14 +47,6 @@ intellij {
 changelog {
     groups.empty()
     repositoryUrl = properties("pluginRepositoryUrl")
-}
-
-// Configure Gradle Qodana Plugin - read more: https://github.com/JetBrains/gradle-qodana-plugin
-qodana {
-    cachePath = provider { file(".qodana").canonicalPath }
-    reportPath = provider { file("build/reports/inspections").canonicalPath }
-    saveReport = true
-    showReport = environment("QODANA_SHOW_REPORT").map { it.toBoolean() }.getOrElse(false)
 }
 
 // Configure Gradle Kover Plugin - read more: https://github.com/Kotlin/kotlinx-kover#configuration
@@ -133,6 +116,6 @@ tasks {
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-        channels = properties("pluginVersion").map { listOf(it.split('-').getOrElse(1) { "default" }.split('.').first()) }
+        channels = properties("pluginVersion").map { listOf(it.substringAfter('-', "").substringBefore('.').ifEmpty { "default" }) }
     }
 }
