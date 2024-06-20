@@ -31,15 +31,16 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
-@Service(Service.Level.APP)
-class MyProjectService() {
+/*
+@Service(Service.Level.PROJECT)
+class MyProjectService(private var project: Project) {
     var toolWindowManager : ToolWindowManager? = null
     var myToolWindow: MyToolWindowFactory.MyToolWindow? = null
 
     init {
         thisLogger().warn("[BLPL] Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
 
-        toolWindowManager = ToolWindowManager.getInstance()
+        toolWindowManager = ToolWindowManager.getInstance(project)
     }
 
     fun requestToolWindowUpdate()
@@ -68,3 +69,4 @@ class MyProjectService() {
 
     fun getRandomNumber() = (1..100).random()
 }
+*/

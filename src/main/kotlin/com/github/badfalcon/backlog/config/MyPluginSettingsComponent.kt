@@ -1,7 +1,7 @@
 package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.services.BacklogService
-import com.github.badfalcon.backlog.services.MyProjectService
+//import com.github.badfalcon.backlog.services.MyProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager

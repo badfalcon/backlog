@@ -10,7 +10,9 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory" id="BacklogPullRequestCheck"/>
+        <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory"
+                    id="BacklogPullRequestCheck"
+                    canCloseContents="true"/>
 
         <applicationConfigurable
                 parentId="tools"

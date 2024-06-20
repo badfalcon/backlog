@@ -2,7 +2,8 @@ package com.github.badfalcon.backlog.toolWindow
 
 import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable
-import com.github.badfalcon.backlog.services.MyProjectService
+//import com.github.badfalcon.backlog.services.MyProjectService
+import com.github.badfalcon.backlog.services.ToolWindowService
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestFactory
@@ -45,6 +46,7 @@ class MyToolWindowFactory : ToolWindowFactory {
     companion object {
         const val TOOL_WINDOW_ID = "BacklogPullRequestCheck"
     }
+
     init {
         thisLogger().warn("[BLPL]Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
     }
@@ -52,18 +54,18 @@ class MyToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         thisLogger().debug("createToolWindowContent")
         println("createToolWindowContent")
-        val myToolWindow = MyToolWindow(project, toolWindow)
-        val service = toolWindow.project.service<MyProjectService>()
-        service.myToolWindow = myToolWindow
+//        val myToolWindow = MyToolWindow(project, toolWindow)
+        val service = toolWindow.project.service<ToolWindowService>()
+//        service.myToolWindow = myToolWindow
 
-        val content = ContentFactory.getInstance().createContent(myToolWindow.getInitContent(), MyBundle.message("toolWindowHomeTabTitle"), false)
+        val content = ContentFactory.getInstance().createContent(service.createHomeTabContent(), MyBundle.message("toolWindowHomeTabTitle"), false)
         toolWindow.contentManager.addContent(content)
     }
 
 
 
     override fun shouldBeAvailable(project: Project) = true
-
+/*
     public class MyToolWindow(private var project: Project, toolWindow: ToolWindow) {
         private val service = toolWindow.project.service<MyProjectService>()
         private var jbPanel = JBPanel<JBPanel<*>>()
@@ -87,21 +89,7 @@ class MyToolWindowFactory : ToolWindowFactory {
             val backlog = service.backlogClient!!
             val gitRepo = service.repository!!
             println("[BLPL] " + "gitRepo")
-            var targetRemoteUrl: String? = null
-            for (remote in gitRepo.remotes)
-            {
-                if (remote.firstUrl == null)
-                {
-                    continue
-                }
-                println(remote.firstUrl)
-                val backlogUrlRegex = Regex("https://.+\\.jp/git/.+/.+\\.git")
-                if(backlogUrlRegex.containsMatchIn(remote.firstUrl!!))
-                {
-                    targetRemoteUrl = remote.firstUrl
-                    break
-                }
-            }
+            val targetRemoteUrl = service.getRemoteUrl()
             if (targetRemoteUrl != null)
             {
                 var blProjectKey : String? = null
@@ -220,6 +208,6 @@ class MyToolWindowFactory : ToolWindowFactory {
             val label = JBLabel("detail tab loading")
             add(label)
         }
-    }
+    }*/
 }
 

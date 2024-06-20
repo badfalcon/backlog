@@ -12,8 +12,8 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
-@Service(Service.Level.APP)
-class GitService(project: Project) {
+@Service(Service.Level.PROJECT)
+class GitService(private var project: Project) {
     var repository : GitRepository? = null
     var isReady : Boolean = repository != null
 
@@ -44,9 +44,30 @@ class GitService(project: Project) {
 
     fun fetch(){
         if (repository != null){
-            val fetch = GitFetchSupport.fetchSupport(repository!!.project)
+            val fetch = GitFetchSupport.fetchSupport(project)
             fetch.fetchAllRemotes(listOf(repository)).showNotificationIfFailed()
         }
+    }
+
+    fun getRemoteUrl(): String? {
+        var result: String? = null
+        if (repository != null){
+            for (remote in repository!!.remotes)
+            {
+                if (remote.firstUrl == null)
+                {
+                    continue
+                }
+                println(remote.firstUrl)
+                val backlogUrlRegex = Regex("https://.+\\.jp/git/.+/.+\\.git")
+                if(backlogUrlRegex.containsMatchIn(remote.firstUrl!!))
+                {
+                    result = remote.firstUrl
+                    break
+                }
+            }
+        }
+        return result
     }
 
     fun getDiff(baseRevision: String, targetRevision: String): MutableCollection<Change>? {
