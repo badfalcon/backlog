@@ -1,6 +1,7 @@
 package com.github.badfalcon.backlog.config
 
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
@@ -8,8 +9,8 @@ import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent
 
 
-class MyPluginSettingsConfigurable : Configurable {
-    private var mySettingsComponent: MyPluginSettingsComponent? = MyPluginSettingsComponent()
+class MyPluginSettingsConfigurable(private var project: Project) : Configurable {
+    private var mySettingsComponent: MyPluginSettingsComponent? = MyPluginSettingsComponent(project)
 
     @Nls(capitalization = Nls.Capitalization.Title)
     override fun getDisplayName(): String {
@@ -23,7 +24,10 @@ class MyPluginSettingsConfigurable : Configurable {
 
     @Nullable
     override fun createComponent(): JComponent? {
-        mySettingsComponent = MyPluginSettingsComponent()
+        thisLogger().warn("[backlog] "+ "MyPluginSettingsConfigurable.createComponent")
+        if(mySettingsComponent == null){
+            mySettingsComponent = MyPluginSettingsComponent(project)
+        }
         return mySettingsComponent?.panel
     }
 

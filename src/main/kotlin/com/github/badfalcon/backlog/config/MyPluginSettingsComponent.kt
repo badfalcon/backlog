@@ -1,23 +1,13 @@
 package com.github.badfalcon.backlog.config
 
+import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
 import com.github.badfalcon.backlog.services.BacklogService
-//import com.github.badfalcon.backlog.services.MyProjectService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
-import com.nulabinc.backlog4j.BacklogClient
-import com.nulabinc.backlog4j.BacklogClientBase
-import com.nulabinc.backlog4j.BacklogClientFactory
-import com.nulabinc.backlog4j.PullRequest.StatusType
-import com.nulabinc.backlog4j.api.option.PullRequestQueryParams
-import com.nulabinc.backlog4j.conf.BacklogConfigure
-import com.nulabinc.backlog4j.conf.BacklogJpConfigure
-import com.nulabinc.backlog4j.http.BacklogHttpClient
-//import com.nulabinc.backlog4j.http.httpclient.HttpClientBacklogHttpClient
 import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -27,7 +17,7 @@ import javax.swing.JPanel
 /**
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
-class MyPluginSettingsComponent {
+class MyPluginSettingsComponent(private var project: Project) {
     val panel: JPanel
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()
@@ -79,8 +69,15 @@ class MyPluginSettingsComponent {
         myInputCheckButton.addActionListener {
             if(workspaceNameText != "" && apiKeyText != ""){
                 // check if the values are valid
-                val isValid : Boolean = service<BacklogService>().isValidBacklogConfigs(workspaceNameText, apiKeyText)
+                val isValid : Boolean = project.service<BacklogService>().isValidBacklogConfigs(workspaceNameText, apiKeyText)
+
                 updateStatus(isValid);
+                if ( isValid){
+
+                    val messageBus = project.messageBus
+                    val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+                    publisher.update("button Action")
+                }
             }
         }
     }

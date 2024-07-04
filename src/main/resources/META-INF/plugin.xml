@@ -11,14 +11,15 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory"
-                    id="BacklogPullRequestCheck"
+                    id="Backlog"
                     canCloseContents="true"/>
 
-        <applicationConfigurable
+        <projectConfigurable
                 parentId="tools"
                 instance="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
                 id="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
-                displayName="Backlog"/>
+                displayName="Backlog"
+                nonDefaultProject="false"/>
 
     </extensions>
 </idea-plugin>

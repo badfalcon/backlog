@@ -1,7 +1,9 @@
 package com.github.badfalcon.backlog.services;
 
 import com.github.badfalcon.backlog.config.MyPluginSettingsState
+import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.nulabinc.backlog4j.*
 import com.nulabinc.backlog4j.api.option.PullRequestQueryParams
@@ -11,17 +13,23 @@ import com.nulabinc.backlog4j.conf.BacklogJpConfigure
 @Service(Service.Level.PROJECT)
 public class BacklogService(private var project: Project) {
     var backlogClient: BacklogClient? = null
-    var isReady: Boolean = backlogClient != null
+    val isReady: Boolean
+        get() = backlogClient != null
     var projectKey: String = ""
     var repoId: Long = 0
 
     init {
+        thisLogger().warn("[backlog] "+ "BacklogService.init")
+
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
 
         if (settings.apiKey != "" && settings.workspaceName != "") {
             val configure: BacklogConfigure = BacklogJpConfigure(settings.workspaceName).apiKey(settings.apiKey);
             if (isValidBacklogConfigs(settings.workspaceName, settings.apiKey)) {
                 backlogClient = BacklogClientFactory(configure).newClient()
+                val messageBus = project.messageBus
+                val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+                publisher.update("Backlog client is ready")
             }
         }
     }
@@ -30,6 +38,7 @@ public class BacklogService(private var project: Project) {
      * Checks if the passed values are valid for backlog
      */
     fun isValidBacklogConfigs(workspaceName: String, apiKey: String): Boolean {
+        thisLogger().warn("[backlog] "+ "BacklogService.isValidBacklogConfigs")
         if (workspaceName == "" || apiKey == "") {
             return false
         }
@@ -37,13 +46,13 @@ public class BacklogService(private var project: Project) {
         val newClient: BacklogClient = BacklogClientFactory(configure).newClient()
         if (newClient.myself.name != null) {
             backlogClient = newClient
-//            requestToolWindowUpdate()
             return true
         }
         return false
     }
 
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{
+        thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
         if (isReady) {
             projectLoop@ for (proj in backlogClient!!.projects) {
                 var repositories: ResponseList<Repository>? = null;
@@ -60,10 +69,10 @@ public class BacklogService(private var project: Project) {
                     }
                 }
             }
-            val pullRequestParams: PullRequestQueryParams = PullRequestQueryParams()
-            val pullRequestStatusTypes: List<PullRequest.StatusType> =
-                List<PullRequest.StatusType>(1) { PullRequest.StatusType.Open };
+            val pullRequestParams = PullRequestQueryParams()
+            val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open };
             pullRequestParams.statusType(pullRequestStatusTypes)
+
             val pullRequests = backlogClient!!.getPullRequests(projectKey, repoId, pullRequestParams)
             return pullRequests;
         }
