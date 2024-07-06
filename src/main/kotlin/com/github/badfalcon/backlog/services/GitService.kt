@@ -1,6 +1,6 @@
 package com.github.badfalcon.backlog.services
 
-import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -54,7 +54,7 @@ class GitService(private var project: Project) {
         println("!!!!!repo ready")
         thisLogger().warn("[BLPL]repository")
         val messageBus = project.messageBus
-        val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+        val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
         // todo invoke later
         ReadAction.run<Throwable> {
             thisLogger().warn("[backlog] " + "Git repository ready")

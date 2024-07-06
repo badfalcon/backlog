@@ -1,6 +1,6 @@
 package com.github.badfalcon.backlog.tabs
 
-import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBLabel
@@ -27,7 +27,7 @@ val reloadButton: JButton = JButton("reload")
                 // update window
                 val project = ProjectManager.getInstance().openProjects[0]
                 val messageBus = project.messageBus
-                val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+                val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
                 publisher.update("reload")
             }
         }

@@ -2,6 +2,7 @@ package com.github.badfalcon.backlog.services;
 
 import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.tabs.BacklogHomeTab
 import com.github.badfalcon.backlog.tabs.BacklogPRDetailTab
 import com.github.badfalcon.backlog.tabs.DiffSelectionListener
@@ -56,7 +57,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         getPullRequests()
 
         project.messageBus.connect().subscribe(
-            ToolWindowNotifier.UPDATE_TOPIC,
+            UPDATE_TOPIC,
             object : ToolWindowNotifier {
                 override fun update(message: String) {
                     // 受信したイベントを処理

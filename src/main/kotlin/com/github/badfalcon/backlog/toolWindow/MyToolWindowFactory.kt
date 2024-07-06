@@ -10,10 +10,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
 
 class MyToolWindowFactory : ToolWindowFactory {
-    companion object {
-        const val TOOL_WINDOW_ID = "BacklogPullRequestCheck"
-    }
-
     init {
         thisLogger().warn("[backlog] "+ "MyToolWindowFactory.init")
     }

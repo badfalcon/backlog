@@ -1,6 +1,6 @@
 package com.github.badfalcon.backlog.config
 
-import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.services.BacklogService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -75,7 +75,7 @@ class MyPluginSettingsComponent(private var project: Project) {
                 if ( isValid){
 
                     val messageBus = project.messageBus
-                    val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+                    val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
                     publisher.update("button Action")
                 }
             }

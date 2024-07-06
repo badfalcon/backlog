@@ -1,7 +1,7 @@
 package com.github.badfalcon.backlog.services;
 
 import com.github.badfalcon.backlog.config.MyPluginSettingsState
-import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -28,7 +28,7 @@ public class BacklogService(private var project: Project) {
             if (isValidBacklogConfigs(settings.workspaceName, settings.apiKey)) {
                 backlogClient = BacklogClientFactory(configure).newClient()
                 val messageBus = project.messageBus
-                val publisher = messageBus.syncPublisher(ToolWindowNotifier.UPDATE_TOPIC)
+                val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
                 publisher.update("Backlog client is ready")
             }
         }
