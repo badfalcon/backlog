@@ -1,4 +1,4 @@
-package com.github.badfalcon.backlog.services;
+package com.github.badfalcon.backlog.services
 
 import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.notifier.ToolWindowNotifier

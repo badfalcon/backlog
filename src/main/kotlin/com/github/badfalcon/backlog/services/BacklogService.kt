@@ -1,8 +1,8 @@
-package com.github.badfalcon.backlog.services;
+package com.github.badfalcon.backlog.services
 
 import com.github.badfalcon.backlog.config.MyPluginSettingsState
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
-import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.nulabinc.backlog4j.*
@@ -24,7 +24,7 @@ public class BacklogService(private var project: Project) {
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
 
         if (settings.apiKey != "" && settings.workspaceName != "") {
-            val configure: BacklogConfigure = BacklogJpConfigure(settings.workspaceName).apiKey(settings.apiKey);
+            val configure: BacklogConfigure = BacklogJpConfigure(settings.workspaceName).apiKey(settings.apiKey)
             if (isValidBacklogConfigs(settings.workspaceName, settings.apiKey)) {
                 backlogClient = BacklogClientFactory(configure).newClient()
                 val messageBus = project.messageBus
@@ -55,7 +55,7 @@ public class BacklogService(private var project: Project) {
         thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
         if (isReady) {
             projectLoop@ for (proj in backlogClient!!.projects) {
-                var repositories: ResponseList<Repository>? = null;
+                var repositories: ResponseList<Repository>? = null
                 try {
                     repositories = backlogClient!!.getGitRepositories(proj.projectKey)
                 } catch (e: Exception) {
@@ -70,11 +70,11 @@ public class BacklogService(private var project: Project) {
                 }
             }
             val pullRequestParams = PullRequestQueryParams()
-            val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open };
+            val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open }
             pullRequestParams.statusType(pullRequestStatusTypes)
 
             val pullRequests = backlogClient!!.getPullRequests(projectKey, repoId, pullRequestParams)
-            return pullRequests;
+            return pullRequests
         }
         return null
     }

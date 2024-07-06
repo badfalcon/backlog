@@ -71,7 +71,7 @@ class MyPluginSettingsComponent(private var project: Project) {
                 // check if the values are valid
                 val isValid : Boolean = project.service<BacklogService>().isValidBacklogConfigs(workspaceNameText, apiKeyText)
 
-                updateStatus(isValid);
+                updateStatus(isValid)
                 if ( isValid){
 
                     val messageBus = project.messageBus

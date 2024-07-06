@@ -35,7 +35,7 @@ val reloadButton: JButton = JButton("reload")
         reload()
     }
 
-    fun getContent() = this;
+    fun getContent() = this
 
     fun reload() {
         thisLogger().warn("[backlog] "+ "BacklogHomeTab.reload")

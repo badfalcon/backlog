@@ -37,7 +37,7 @@ class GitService(private var project: Project) {
             return
         }
 
-        val rootDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(basePath);
+        val rootDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(basePath)
         if (rootDirectory == null) {
             println("!!!!!rootDirectory == null")
             repository = null
@@ -105,7 +105,7 @@ class GitService(private var project: Project) {
                     revisionBase.rev,
                     revisionTarget.rev,
                     null
-                );
+                )
             }
         }
         return null
