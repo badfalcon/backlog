@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.badfalcon.backlog</id>
-    <name>backlog Template</name>
+    <name>Backlog</name>
     <vendor>badfalcon</vendor>
 
     <depends>Git4Idea</depends>
