@@ -60,7 +60,6 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             UPDATE_TOPIC,
             object : ToolWindowNotifier {
                 override fun update(message: String) {
-                    // 受信したイベントを処理
                     println("Received message: $message")
                     getPullRequests()
                 }

@@ -60,23 +60,19 @@ class BacklogPRDetailTab(
         val changesTable = createChangesTable()
         val changesPanel = JBScrollPane(changesTable)
 
-        // コミット一覧を表示するためのダミーデータ（本来は実データを取得して表示する）
         val commitsTable = createCommitsTable()
         val commitsPanel = JBScrollPane(commitsTable)
 
-        // タブの作成
+        // create tabbed pane
         val tabbedPane = JTabbedPane()
 
-        // プルリクエストの詳細タブ
         tabbedPane.addTab("Pull Request Details", null, pullRequestPanel, "Details of the Pull Request")
 
-        // ファイル変更タブ
         tabbedPane.addTab("File Changes", null, changesPanel, "List of file changes")
 
-        // コミット一覧タブ
         tabbedPane.addTab("Commits", null, commitsPanel, "List of commits")
 
-        // メインパネルにタブを設定
+        // create main panel
         val mainPanel = panel {
             row {
                 cell(tabbedPane).align(Align.FILL)

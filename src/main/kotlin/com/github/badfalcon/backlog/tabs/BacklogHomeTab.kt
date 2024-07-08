@@ -64,7 +64,7 @@ val reloadButton: JButton = JButton("reload")
                 var p = pullRequests.map { it.summary }
                 pullRequestList = JBList(p)
 
-                // プルリクエストが選択されたときのリスナーを設定
+                // set selection listener
                 pullRequestList!!.addListSelectionListener { e ->
                     if (!e.valueIsAdjusting) {
                         // todo create a new tab
@@ -72,7 +72,7 @@ val reloadButton: JButton = JButton("reload")
                     }
                 }
 
-                // pullRequestList をパネルに追加
+                // add list to panel
                 add(pullRequestList)
             }
         }
