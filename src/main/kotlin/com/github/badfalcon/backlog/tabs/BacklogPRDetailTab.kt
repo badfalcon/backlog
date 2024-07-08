@@ -27,26 +27,6 @@ class BacklogPRDetailTab(
         println("BacklogPRDetailTab init")
     }
 
-    fun reload() {
-        thisLogger().warn("[backlog] BacklogPRDetailTab.reload")
-        // 明示的にUIをリロードする場合に使用
-    }
-
-    private fun createContentPanel(): DialogPanel {
-        return if (pullRequest != null) {
-            panel {
-                row { label("Pull Request") }
-                row { label("タイトル: ${pullRequest.summary}") }
-                row { label("詳細: ${pullRequest.description}") }
-            }
-        } else {
-            panel {
-                row { label("Pull Request") }
-                row { label("プルリクエストがありません") }
-            }
-        }
-    }
-
     fun create(): JComponent {
         val descriptionHtml = toHtml(pullRequest.description)
 
