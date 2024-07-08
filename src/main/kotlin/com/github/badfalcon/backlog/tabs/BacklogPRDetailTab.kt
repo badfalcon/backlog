@@ -7,7 +7,9 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.table.JBTable
 import com.nulabinc.backlog4j.PullRequest
+import git4idea.GitCommit
 import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
@@ -16,7 +18,9 @@ import javax.swing.JTabbedPane
 class BacklogPRDetailTab(
     private val pullRequest: PullRequest,
     private val changes: MutableCollection<Change>?,
-    private val diffSelectionListener: DiffSelectionListener
+    private val diffSelectionListener: DiffSelectionListener,
+    private val commits: MutableList<GitCommit>?,
+    private val commitSelectionListener: CommitSelectionListener
 ) {
 
     init {
@@ -82,14 +86,14 @@ class BacklogPRDetailTab(
         return mainPanel
     }
 
-    private fun createChangesTable(): JTable {
+    private fun createChangesTable(): JBTable {
         val columnNames = arrayOf("File Status", "File Name")
         val data = changes?.map {
             arrayOf(it.fileStatus.toString(), getFileName(it))
-        }?.toTypedArray() ?: arrayOf(arrayOf("変更がありません", ""))
+        }?.toTypedArray() ?: arrayOf(arrayOf("no changes", ""))
 
         val tableModel = DefaultTableModel(data, columnNames)
-        val changesTable = JTable(tableModel)
+        val changesTable = JBTable(tableModel)
 
         changesTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
@@ -104,17 +108,28 @@ class BacklogPRDetailTab(
         return changesTable
     }
 
-    private fun createCommitsTable(): JTable {
+    private fun createCommitsTable(): JBTable {
         val columnNames = arrayOf("Commit Hash", "Commit Message")
-        val data = arrayOf(
-            // ダミーデータ
-            arrayOf("abc123", "Initial commit"),
-            arrayOf("def456", "Fixed bug"),
-            arrayOf("ghi789", "Added new feature")
-        )
+
+        val data = commits?.map {
+            arrayOf(it.id.toShortString(), it.fullMessage)
+        }?.toTypedArray() ?: arrayOf(arrayOf("no commits", ""))
 
         val tableModel = DefaultTableModel(data, columnNames)
-        return JTable(tableModel)
+        val commitsTable = JBTable(tableModel)
+        commitsTable.autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
+
+        commitsTable.selectionModel.addListSelectionListener { e ->
+            if (!e.valueIsAdjusting) {
+                val selectedRow = commitsTable.selectedRow
+                if (selectedRow >= 0 && selectedRow < commits?.size ?: 0) {
+                    val commit = commits?.elementAt(selectedRow)
+                    commit?.let { commitSelectionListener.onCommitSelected(it) }
+                }
+            }
+        }
+
+        return commitsTable
     }
 
     private fun getFileName(change: Change): String? {
@@ -137,4 +152,8 @@ class BacklogPRDetailTab(
 
 interface DiffSelectionListener {
     fun onDiffSelected(change: Change)
+}
+
+interface CommitSelectionListener {
+    fun onCommitSelected(commit: GitCommit)
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.ResponseList
+import git4idea.GitCommit
 
 @Service(Service.Level.PROJECT)
 class PullRequestService(private var project: Project) {
@@ -36,6 +37,15 @@ class PullRequestService(private var project: Project) {
         if(gitService?.isReady == true){
             val changes = gitService!!.getChanges(pullRequest.base, pullRequest.branch)
             return changes
+        }
+        return null
+    }
+
+    fun getCommits(pullRequest: PullRequest) : MutableList<GitCommit>? {
+        thisLogger().warn("[backlog] "+"PullRequestService.getCommits")
+        if(gitService?.isReady == true){
+            val commits = gitService!!.getCommits(pullRequest.base, pullRequest.branch)
+            return commits
         }
         return null
     }

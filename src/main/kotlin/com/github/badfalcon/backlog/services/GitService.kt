@@ -8,10 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.GitCommit
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.fetch.GitFetchSupport
+import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 
@@ -106,6 +108,22 @@ class GitService(private var project: Project) {
                     revisionTarget.rev,
                     null
                 )
+            }
+        }
+        return null
+    }
+
+    fun getCommits(baseBranchName: String, targetBranchName: String): MutableList<GitCommit>? {
+        thisLogger().warn("[backlog] " + "GitService.getCommits")
+        if (isReady) {
+            val base = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == baseBranchName }
+            val target = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == targetBranchName }
+
+            if (base != null && target != null) {
+               return GitHistoryUtils.history(
+                    project,
+                    repository!!.root,
+                    base.name+".."+target.name )
             }
         }
         return null

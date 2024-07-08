@@ -3,12 +3,11 @@ package com.github.badfalcon.backlog.services
 import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
-import com.github.badfalcon.backlog.tabs.BacklogHomeTab
-import com.github.badfalcon.backlog.tabs.BacklogPRDetailTab
-import com.github.badfalcon.backlog.tabs.DiffSelectionListener
-import com.github.badfalcon.backlog.tabs.PullRequestSelectionListener
+import com.github.badfalcon.backlog.tabs.*
 import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManager
+import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.openapi.application.ApplicationManager
@@ -25,6 +24,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.ResponseList
+import git4idea.GitCommit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,7 +41,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     var pullRequestService: PullRequestService? = null
 
     init {
-        thisLogger().warn("[backlog] "+"ToolWindowService.init")
+        thisLogger().warn("[backlog] " + "ToolWindowService.init")
         pullRequestService = project.service<PullRequestService>()
 
 
@@ -68,9 +68,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
 
     fun getPullRequests() {
-        thisLogger().warn("[backlog] "+"ToolWindowService.getPullRequests")
+        thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
         cs.launch {
-            withContext(Dispatchers.IO){
+            withContext(Dispatchers.IO) {
                 val pullRequests = pullRequestService?.getPullRequests()
                 if (pullRequests != null) {
                     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
@@ -82,8 +82,8 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         }
     }
 
-    fun createHomeTabContent(pullRequests: ResponseList<PullRequest>? = null) : JBPanel<JBPanel<*>> {
-        thisLogger().warn("[backlog] "+"ToolWindowService.CreateHomeTab")
+    fun createHomeTabContent(pullRequests: ResponseList<PullRequest>? = null): JBPanel<JBPanel<*>> {
+        thisLogger().warn("[backlog] " + "ToolWindowService.CreateHomeTab")
         if (toolWindow != null) {
             // ツールウィンドウを取得
             val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
@@ -100,34 +100,43 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
 
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] "+ "ToolWindowService.tryGetPullRequestTabContent")
+        thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
         val contentManager = toolWindow!!.contentManager
-        if (contentManager.findContent(pullRequest.number.toString()) != null){
+        if (contentManager.findContent(pullRequest.number.toString()) != null) {
             // select tab
             val content = contentManager.findContent(pullRequest.number.toString())!!
             toolWindow.contentManager.setSelectedContent(content, true, true)
-        }else {
+        } else {
             // create tab
             createPullRequestTabContent(pullRequest)
         }
     }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] "+ "ToolWindowService.createPullRequestTabContent")
+        thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
         if (toolWindow != null) {
             // コルーチンを使って変更を取得
             cs.launch {
-                withContext(Dispatchers.IO){
+                withContext(Dispatchers.IO) {
                     val changes = pullRequestService?.getChanges(pullRequest)
+                    val commits = pullRequestService?.getCommits(pullRequest)
                     ApplicationManager.getApplication().invokeLater {
-                        val listener = object : DiffSelectionListener {
+                        val diffListener = object : DiffSelectionListener {
                             override fun onDiffSelected(change: Change) {
                                 showDiff(change)
                             }
                         }
-                        val tabContent = BacklogPRDetailTab(pullRequest, changes, listener).create()
-                        val content = ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
+                        val commitListener = object : CommitSelectionListener {
+                            override fun onCommitSelected(commit: GitCommit) {
+                                thisLogger().warn("Commit selected")
+                                showCommit(commit)
+                            }
+                        }
+                        val tabContent =
+                            BacklogPRDetailTab(pullRequest, changes, diffListener, commits, commitListener).create()
+                        val content =
+                            ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
                         content.setDisposer { tabs.remove(pullRequest.number) }
                         val contentManager = toolWindow!!.contentManager
                         thisLogger().warn(content.isCloseable.toString())
@@ -140,28 +149,47 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         }
     }
 
-    fun showDiff(change: Change){
-        if(change != null){
-            var fileName : String
-            val fileType : FileType
-            if (change.beforeRevision?.file?.name != null) {
-                fileName = change.beforeRevision?.file?.name!!
-                fileType = change.beforeRevision?.file?.fileType!!
-            }else{
-                fileName = change.afterRevision?.file?.name!!
-                fileType = change.afterRevision?.file?.fileType!!
-            }
-            val beforeRevision = change.beforeRevision?.content?:""
-            val afterRevision = change.afterRevision?.content?:""
-            val beforeRevisionNumberString = change.beforeRevision?.revisionNumber.toString()
-            val afterRevisionNumberString = change.afterRevision?.revisionNumber.toString()
-            val currentContent: DiffContent = DiffContentFactory.getInstance().create(project, beforeRevision, fileType)
-            val baseContent: DiffContent = DiffContentFactory.getInstance().create(project, afterRevision, fileType)
-            val request = SimpleDiffRequest(fileName,currentContent,baseContent,beforeRevisionNumberString,afterRevisionNumberString)
-            // Access from the EDT
+    fun showDiff(change: Change) {
+        val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+        val request = createDiffRequest(change, fileName)
+        request?.let {
             SwingUtilities.invokeLater {
-                DiffManager.getInstance().showDiff(project, request)
+                DiffManager.getInstance().showDiff(project, it)
             }
         }
+    }
+
+    fun showCommit(commit: GitCommit) {
+        val diffRequests = commit.changes.mapIndexedNotNull { idx, change ->
+            val shortId = commit.id.toShortString()
+            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+            val title = "$shortId diff ${idx + 1}/${commit.changes.size} ($fileName)"
+            createDiffRequest(change, title)
+        }
+
+        val diffRequestChain = SimpleDiffRequestChain(diffRequests)
+        SwingUtilities.invokeLater {
+            DiffManager.getInstance().showDiff(project, diffRequestChain, DiffDialogHints.DEFAULT)
+        }
+    }
+
+    private fun createDiffRequest(change: Change, title: String): SimpleDiffRequest? {
+        val beforeRevision = change.beforeRevision?.content ?: ""
+        val afterRevision = change.afterRevision?.content ?: ""
+        val fileType = change.beforeRevision?.file?.fileType ?: change.afterRevision?.file?.fileType ?: return null
+
+        val beforeRevisionNumberString = change.beforeRevision?.revisionNumber?.toString() ?: ""
+        val afterRevisionNumberString = change.afterRevision?.revisionNumber?.toString() ?: ""
+
+        val currentContent: DiffContent = DiffContentFactory.getInstance().create(project, beforeRevision, fileType)
+        val baseContent: DiffContent = DiffContentFactory.getInstance().create(project, afterRevision, fileType)
+
+        return SimpleDiffRequest(
+            title,
+            currentContent,
+            baseContent,
+            beforeRevisionNumberString,
+            afterRevisionNumberString
+        )
     }
 }
