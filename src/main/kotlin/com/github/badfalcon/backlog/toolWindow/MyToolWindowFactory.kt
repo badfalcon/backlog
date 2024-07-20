@@ -22,11 +22,11 @@ class MyToolWindowFactory : ToolWindowFactory {
         service.toolWindow = toolWindow
 
         // create home tab
-        val content = ContentFactory.getInstance().createContent(service.createHomeTabContent(null), MyBundle.message("toolWindowHomeTabTitle"), false)
+        val homeTab = service.createHomeTabContent(null)
+        val content = ContentFactory.getInstance().createContent(homeTab, MyBundle.message("toolWindowHomeTabTitle"), false)
         content.isCloseable = false
         toolWindow.contentManager.addContent(content)
     }
 
     override fun shouldBeAvailable(project: Project) = true
 }
-

@@ -1,19 +1,20 @@
 package com.github.badfalcon.backlog.tabs
 
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.nulabinc.backlog4j.PullRequest
 import git4idea.GitCommit
+import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
-import javax.swing.JTabbedPane
+import javax.swing.ListSelectionModel
+import javax.swing.table.TableCellRenderer
 
 class BacklogPRDetailTab(
     private val pullRequest: PullRequest,
@@ -28,35 +29,50 @@ class BacklogPRDetailTab(
     }
 
     fun create(): JComponent {
-        val descriptionHtml = toHtml(pullRequest.description)
-
-        val pullRequestPanel = panel {
-            row(pullRequest.number.toString()) { label(pullRequest.summary) }
-            row(pullRequest.createdUser.name) {}
-            separator()
-            row { label(descriptionHtml) }
+        // create overview
+        val overviewPanel = panel {
+            row("#" + pullRequest.number.toString()) {
+                label(pullRequest.summary)
+            }
+            row("author") {
+                label(pullRequest.createdUser.name)
+            }
+            row("branch") {
+                label (pullRequest.base.toString() + " <- " + pullRequest.branch.toString())
+            }
         }
 
+        // create description
+        val descriptionHtml = toHtml(pullRequest.description)
+        val pullRequestPanel = panel {
+            row { label(descriptionHtml) }
+        }
+        val prpScrollPane = JBScrollPane(pullRequestPanel)
+
+        // create changes
         val changesTable = createChangesTable()
         val changesPanel = JBScrollPane(changesTable)
+        val chScrollPane = JBScrollPane(changesPanel)
 
+        // create commits
         val commitsTable = createCommitsTable()
         val commitsPanel = JBScrollPane(commitsTable)
+        val cmScrollPane = JBScrollPane(commitsPanel)
 
         // create tabbed pane
-        val tabbedPane = JTabbedPane()
-
-        tabbedPane.addTab("Pull Request Details", null, pullRequestPanel, "Details of the Pull Request")
-
-        tabbedPane.addTab("File Changes", null, changesPanel, "List of file changes")
-
-        tabbedPane.addTab("Commits", null, commitsPanel, "List of commits")
+        val tabbedPane = JBTabbedPane()
+        tabbedPane.addTab("Pull Request Details", null, prpScrollPane, "Details of the Pull Request")
+        tabbedPane.addTab("File Changes", null, chScrollPane, "List of file changes")
+        tabbedPane.addTab("Commits", null, cmScrollPane, "List of commits")
 
         // create main panel
         val mainPanel = panel {
             row {
-                cell(tabbedPane).align(Align.FILL)
+                cell(overviewPanel)
             }
+            row {
+                cell(tabbedPane).align(Align.FILL)
+            }.resizableRow()
         }
 
         return mainPanel
@@ -66,30 +82,32 @@ class BacklogPRDetailTab(
         val columnNames = arrayOf("File Status", "File Name")
         val data = changes?.map {
             arrayOf(it.fileStatus.toString(), getFileName(it))
-        }?.toTypedArray() ?: arrayOf(arrayOf("no changes", ""))
+        }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
 
         val tableModel = DefaultTableModel(data, columnNames)
         val changesTable = JBTable(tableModel)
 
         changesTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
-                val selectedRow = changesTable.selectedRow
-                if (selectedRow >= 0 && selectedRow < changes?.size ?: 0) {
-                    val change = changes?.elementAt(selectedRow)
-                    change?.let { diffSelectionListener.onDiffSelected(it) }
+
+                val lsm : ListSelectionModel = e.source as ListSelectionModel
+                if (!lsm.isSelectionEmpty) {
+                    val selectedRow = lsm.minSelectionIndex
+                    val change = changes!!.elementAt(selectedRow)
+                    diffSelectionListener.onDiffSelected(change)
                 }
             }
         }
 
+        autoResizeTableColumns(changesTable)
         return changesTable
     }
 
     private fun createCommitsTable(): JBTable {
         val columnNames = arrayOf("Commit Hash", "Commit Message")
-
         val data = commits?.map {
             arrayOf(it.id.toShortString(), it.fullMessage)
-        }?.toTypedArray() ?: arrayOf(arrayOf("no commits", ""))
+        }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
 
         val tableModel = DefaultTableModel(data, columnNames)
         val commitsTable = JBTable(tableModel)
@@ -97,13 +115,15 @@ class BacklogPRDetailTab(
 
         commitsTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
-                val selectedRow = commitsTable.selectedRow
-                if (selectedRow >= 0 && selectedRow < commits?.size ?: 0) {
-                    val commit = commits?.elementAt(selectedRow)
-                    commit?.let { commitSelectionListener.onCommitSelected(it) }
+                val lsm : ListSelectionModel = e.source as ListSelectionModel
+                if (!lsm.isSelectionEmpty) {
+                    val selectedRow = lsm.minSelectionIndex
+                    commitSelectionListener.onCommitSelected(commits!![selectedRow])
                 }
             }
         }
+
+        autoResizeTableColumns(commitsTable)
 
         return commitsTable
     }
@@ -124,6 +144,24 @@ class BacklogPRDetailTab(
 
         return "<html>$result</html>"
     }
+
+    private fun autoResizeTableColumns(table: JBTable) {
+        val header = table.tableHeader
+        val columnModel = table.columnModel
+        for (column in 0 until columnModel.columnCount) {
+            var maxWidth = header.getDefaultRenderer()
+                .getTableCellRendererComponent(table, header.getColumnModel().getColumn(column).getHeaderValue(), false, false, -1, column)
+                .preferredSize.width
+            for (row in 0 until table.rowCount) {
+                val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)
+                val cellComponent: Component = table.prepareRenderer(cellRenderer, row, column)
+                val cellWidth: Int = cellComponent.preferredSize.width
+                maxWidth = maxOf(maxWidth, cellWidth)
+            }
+            columnModel.getColumn(column).preferredWidth = maxWidth + 20 // マージンを追加
+        }
+    }
+
 }
 
 interface DiffSelectionListener {
