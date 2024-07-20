@@ -29,6 +29,8 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
         reloadButton.apply {
             addActionListener {
+                reloadButton.isEnabled = false
+                pullRequestTable?.isEnabled = false
                 statusLabel.text = "reloading"
 
                 // update window
@@ -65,6 +67,9 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
         if (updateFinish) {
             statusLabel.text = ""
+            reloadButton.isEnabled = true
+            pullRequestTable?.isEnabled = true
+
         }
         // update window
         revalidate()
