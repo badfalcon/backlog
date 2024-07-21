@@ -1,7 +1,7 @@
 package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
-import com.github.badfalcon.backlog.services.BacklogService
+import com.github.badfalcon.backlog.service.BacklogService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor

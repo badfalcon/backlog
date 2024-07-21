@@ -1,4 +1,4 @@
-package com.github.badfalcon.backlog.services
+package com.github.badfalcon.backlog.service
 
 import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.wm.ToolWindow

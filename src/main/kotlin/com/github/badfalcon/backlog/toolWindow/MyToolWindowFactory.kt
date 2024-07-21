@@ -1,7 +1,7 @@
 package com.github.badfalcon.backlog.toolWindow
 
 import com.github.badfalcon.backlog.MyBundle
-import com.github.badfalcon.backlog.services.ToolWindowService
+import com.github.badfalcon.backlog.service.ToolWindowService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project

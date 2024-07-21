@@ -1,4 +1,4 @@
-package com.github.badfalcon.backlog.services
+package com.github.badfalcon.backlog.service
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

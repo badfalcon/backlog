@@ -1,4 +1,4 @@
-package com.github.badfalcon.backlog.services
+package com.github.badfalcon.backlog.service
 
 import com.github.badfalcon.backlog.config.MyPluginSettingsState
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
