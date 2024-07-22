@@ -19,9 +19,13 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableCellRenderer
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
+import kotlin.io.path.relativeTo
 
 class BacklogPRDetailTab(
     private val pullRequest: PullRequest,
+    basePathStr : String?,
     private val changes: MutableCollection<Change>?,
     private val diffSelectionListener: DiffSelectionListener,
     private val commits: MutableList<GitCommit>?,
@@ -29,6 +33,7 @@ class BacklogPRDetailTab(
     private val attachments: MutableList<Attachment>?,
     private val attachmentData: MutableList<AttachmentData>?
 ) {
+    private val basePath = Path(basePathStr?:"")
 
     init {
         println("BacklogPRDetailTab init")
@@ -135,10 +140,14 @@ class BacklogPRDetailTab(
     }
 
     private fun getFileName(change: Change): String? {
-        return when (change.fileStatus) {
-            FileStatus.ADDED -> change.afterRevision?.file?.name
-            else -> change.beforeRevision?.file?.name
+        val fullPathStr = when (change.fileStatus) {
+            FileStatus.ADDED -> change.afterRevision?.file?.path
+            else -> change.beforeRevision?.file?.path
         }
+        val fullPath = Path(fullPathStr?:"")
+
+        val relativePath = fullPath.relativeTo(basePath)
+        return relativePath.pathString
     }
 
     private fun autoResizeTableColumns(table: JBTable) {
@@ -177,7 +186,7 @@ private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>
         update()
     }
 
-    fun setBody(src: String, attachments: MutableList<Attachment>?,attachmentData: MutableList<AttachmentData>?) {
+    fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>?) {
         text = BacklogMarkdownConverter().toHtml(src, attachments, attachmentData)
         update()
     }

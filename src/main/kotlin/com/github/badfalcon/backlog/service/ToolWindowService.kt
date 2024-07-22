@@ -71,8 +71,6 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             withContext(Dispatchers.IO) {
                 val pullRequests = pullRequestService?.getPullRequests()
                 if (pullRequests != null) {
-                    // Q. プルリクエストをID降順で表示するように調整 を英語にして
-                    // A. Adjust to display pull requests in descending order of ID
                     pullRequests.reverse()
                     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
                     val contentManager = toolWindow!!.contentManager
@@ -136,7 +134,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                             }
                         }
                         val tabContent =
-                            BacklogPRDetailTab(pullRequest, changes, diffListener, commits, commitListener, pullRequest.attachments, attachments).create()
+                            BacklogPRDetailTab(pullRequest, project.basePath, changes, diffListener, commits, commitListener, pullRequest.attachments, attachments).create()
                         val content =
                             ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
                         content.setDisposer { tabs.remove(pullRequest.number) }
