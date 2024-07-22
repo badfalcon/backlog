@@ -119,6 +119,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 withContext(Dispatchers.IO) {
                     val changes = pullRequestService?.getChanges(pullRequest)
                     val commits = pullRequestService?.getCommits(pullRequest)
+                    val attachments = pullRequestService?.getAttachments(pullRequest)
                     ApplicationManager.getApplication().invokeLater {
                         val diffListener = object : DiffSelectionListener {
                             override fun onDiffSelected(change: Change) {
@@ -132,7 +133,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                             }
                         }
                         val tabContent =
-                            BacklogPRDetailTab(pullRequest, changes, diffListener, commits, commitListener).create()
+                            BacklogPRDetailTab(pullRequest, changes, diffListener, commits, commitListener, pullRequest.attachments, attachments).create()
                         val content =
                             ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
                         content.setDisposer { tabs.remove(pullRequest.number) }

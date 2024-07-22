@@ -11,7 +11,7 @@ import com.nulabinc.backlog4j.conf.BacklogConfigure
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure
 
 @Service(Service.Level.PROJECT)
-public class BacklogService(private var project: Project) {
+class BacklogService(project: Project) {
     var backlogClient: BacklogClient? = null
     val isReady: Boolean
         get() = backlogClient != null
@@ -77,5 +77,18 @@ public class BacklogService(private var project: Project) {
             return pullRequests
         }
         return null
+    }
+
+    fun getImageAttachments(pullRequestId: Long, attachments: MutableList<Attachment>): MutableList<AttachmentData> {
+        thisLogger().warn("[backlog] " + "GitService.getAttachmentData")
+        val list = mutableListOf<AttachmentData>()
+        if (isReady) {
+            for (attachment in attachments) {
+                val attachmentId = attachment.id
+                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId);
+                list.add(data)
+            }
+        }
+        return list
     }
 }

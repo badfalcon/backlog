@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
@@ -49,4 +50,11 @@ class PullRequestService(private var project: Project) {
         }
         return null
     }
+
+    fun getAttachments(pullRequest: PullRequest) : MutableList<AttachmentData>? {
+        thisLogger().warn("[backlog] "+"PullRequestService.getAttachments")
+        val attachmentData = backlogService!!.getImageAttachments(pullRequest.number, pullRequest.attachments)
+        return attachmentData
+    }
+
 }

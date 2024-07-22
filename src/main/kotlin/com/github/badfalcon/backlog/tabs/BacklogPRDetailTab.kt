@@ -1,5 +1,6 @@
 package com.github.badfalcon.backlog.tabs
 
+import com.github.badfalcon.backlog.util.BacklogMarkdownConverter
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.components.JBScrollPane
@@ -7,6 +8,9 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.HtmlPanel
+import com.nulabinc.backlog4j.Attachment
+import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
 import git4idea.GitCommit
 import java.awt.Component
@@ -21,7 +25,9 @@ class BacklogPRDetailTab(
     private val changes: MutableCollection<Change>?,
     private val diffSelectionListener: DiffSelectionListener,
     private val commits: MutableList<GitCommit>?,
-    private val commitSelectionListener: CommitSelectionListener
+    private val commitSelectionListener: CommitSelectionListener,
+    private val attachments: MutableList<Attachment>?,
+    private val attachmentData: MutableList<AttachmentData>?
 ) {
 
     init {
@@ -43,9 +49,9 @@ class BacklogPRDetailTab(
         }
 
         // create description
-        val descriptionHtml = toHtml(pullRequest.description)
+        val htmlPanel =  BacklogHtmlPanel(pullRequest.description, attachments, attachmentData)
         val pullRequestPanel = panel {
-            row { label(descriptionHtml) }
+            row { cell(htmlPanel) }
         }
         val prpScrollPane = JBScrollPane(pullRequestPanel)
 
@@ -135,16 +141,6 @@ class BacklogPRDetailTab(
         }
     }
 
-    fun toHtml(text: String): String {
-        var result = text.replace(Regex("""\*\*\*\s?(.*)\r\n"""), "<h3>$1</h3>")
-        result = result.replace(Regex("""\*\*\*\s?(.*)\r\n"""), "<h3>$1</h3>")
-        result = result.replace(Regex("""\*\*\s?(.*)\r\n"""), "<h2>$1</h2>")
-        result = result.replace(Regex("""\*\s?(.*)\r\n"""), "<h1>$1</h1>")
-        result = result.replace("\n", "<br>")
-
-        return "<html>$result</html>"
-    }
-
     private fun autoResizeTableColumns(table: JBTable) {
         val header = table.tableHeader
         val columnModel = table.columnModel
@@ -170,4 +166,23 @@ interface DiffSelectionListener {
 
 interface CommitSelectionListener {
     fun onCommitSelected(commit: GitCommit)
+}
+
+private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>?) : HtmlPanel(){
+    init {
+        contentType = "text/html"
+
+        setBody(src, attachments, attachmentData)
+        isEditable = false
+        update()
+    }
+
+    fun setBody(src: String, attachments: MutableList<Attachment>?,attachmentData: MutableList<AttachmentData>?) {
+        text = BacklogMarkdownConverter().toHtml(src, attachments, attachmentData)
+        update()
+    }
+
+    override fun getBody(): String {
+        return text
+    }
 }
