@@ -71,6 +71,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             withContext(Dispatchers.IO) {
                 val pullRequests = pullRequestService?.getPullRequests()
                 if (pullRequests != null) {
+                    // Q. プルリクエストをID降順で表示するように調整 を英語にして
+                    // A. Adjust to display pull requests in descending order of ID
+                    pullRequests.reverse()
                     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
                     val contentManager = toolWindow!!.contentManager
                     val homeTab = contentManager.findContent(MyBundle.message("toolWindowHomeTabTitle")).component as BacklogHomeTab
