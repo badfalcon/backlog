@@ -95,7 +95,11 @@ class BacklogPRDetailTab(
             arrayOf(it.fileStatus.toString(), getFileName(it))
         }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
 
-        val tableModel = DefaultTableModel(data, columnNames)
+        val tableModel = object : DefaultTableModel(data, columnNames) {
+            override fun isCellEditable(row: Int, column: Int): Boolean {
+                return false
+            }
+        }
         val changesTable = JBTable(tableModel)
 
         changesTable.selectionModel.addListSelectionListener { e ->
@@ -120,7 +124,11 @@ class BacklogPRDetailTab(
             arrayOf(it.id.toShortString(), it.fullMessage)
         }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
 
-        val tableModel = DefaultTableModel(data, columnNames)
+        val tableModel = object : DefaultTableModel(data, columnNames) {
+            override fun isCellEditable(row: Int, column: Int): Boolean {
+                return false
+            }
+        }
         val commitsTable = JBTable(tableModel)
         commitsTable.autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
 

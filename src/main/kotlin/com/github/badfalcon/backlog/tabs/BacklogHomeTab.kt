@@ -83,7 +83,11 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())
         }?.toTypedArray() ?: arrayOf(arrayOf("", "", "", ""))
 
-        val tableModel = DefaultTableModel(data, columnNames)
+        val tableModel = object : DefaultTableModel(data, columnNames) {
+            override fun isCellEditable(row: Int, column: Int): Boolean {
+                return false
+            }
+        }
         pullRequestTable = JBTable(tableModel)
 
         // set selection listener
@@ -96,9 +100,12 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 }
             }
         }
+        pullRequestTable!!.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
         // auto resize columns
         autoResizeTableColumns(pullRequestTable!!)
+
+        pullRequestTable!!.isEnabled = pullRequests != null
 
         reload(true)
     }
