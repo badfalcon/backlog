@@ -10,9 +10,11 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory"
-                    id="Backlog"
-                    canCloseContents="true"/>
+        <toolWindow
+                factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory"
+                id="Backlog"
+                icon="com.github.badfalcon.backlog.icons.BacklogIcons.ToolWindow"
+                canCloseContents="true"/>
 
         <projectConfigurable
                 parentId="tools"
