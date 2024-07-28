@@ -82,8 +82,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
     fun update(pullRequests: ResponseList<PullRequest>?) {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
-        val tableModel = createTableModel(pullRequests)
-        pullRequestTable.model = tableModel
+        pullRequestTable.model = createTableModel(pullRequests)
 
         // set selection listener
         pullRequestTable.selectionModel.addListSelectionListener { e ->
