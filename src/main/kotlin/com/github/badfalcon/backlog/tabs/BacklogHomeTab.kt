@@ -23,14 +23,18 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
     val reloadButton: JButton = JButton("reload")
     val statusLabel: JBLabel = JBLabel()
 
-    var pullRequestTable: JBTable? = null
+    var pullRequestTable: JBTable = JBTable(createTableModel(null))
 
     init {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
+        // create pull request selection table
+        pullRequestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+
+        // create reload button action
         reloadButton.apply {
             addActionListener {
                 reloadButton.isEnabled = false
-                pullRequestTable?.isEnabled = false
+                pullRequestTable.isEnabled = false
                 statusLabel.text = "reloading"
 
                 // update window
@@ -68,7 +72,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         if (updateFinish) {
             statusLabel.text = ""
             reloadButton.isEnabled = true
-            pullRequestTable?.isEnabled = true
+            pullRequestTable.isEnabled = true
 
         }
         // update window
@@ -78,20 +82,11 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
     fun update(pullRequests: ResponseList<PullRequest>?) {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
-        val columnNames = arrayOf("#", "title", "author", "branch")
-        val data = pullRequests?.map {
-            arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())
-        }?.toTypedArray() ?: arrayOf(arrayOf("", "", "", ""))
-
-        val tableModel = object : DefaultTableModel(data, columnNames) {
-            override fun isCellEditable(row: Int, column: Int): Boolean {
-                return false
-            }
-        }
-        pullRequestTable = JBTable(tableModel)
+        val tableModel = createTableModel(pullRequests)
+        pullRequestTable.model = tableModel
 
         // set selection listener
-        pullRequestTable!!.selectionModel.addListSelectionListener { e ->
+        pullRequestTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
                 val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
@@ -100,14 +95,26 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 }
             }
         }
-        pullRequestTable!!.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
         // auto resize columns
-        autoResizeTableColumns(pullRequestTable!!)
+        autoResizeTableColumns(pullRequestTable)
 
-        pullRequestTable!!.isEnabled = pullRequests != null
+        pullRequestTable.isEnabled = pullRequests != null
 
-        reload(true)
+        reload(pullRequests != null)
+    }
+
+    private fun createTableModel(pullRequests: ResponseList<PullRequest>?): DefaultTableModel {
+        val columnNames = arrayOf("#", "title", "author", "branch")
+        val data = pullRequests?.map {
+            arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())
+        }?.toTypedArray() ?: arrayOf(arrayOf("", "", "", ""))
+
+        return object : DefaultTableModel(data, columnNames) {
+            override fun isCellEditable(row: Int, column: Int): Boolean {
+                return false
+            }
+        }
     }
 
     private fun autoResizeTableColumns(table: JBTable) {
