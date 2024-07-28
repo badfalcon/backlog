@@ -18,11 +18,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.nulabinc.backlog4j.PullRequest
-import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,29 +30,19 @@ import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
 class ToolWindowService(private var project: Project, private val cs: CoroutineScope) {
-    var toolWindow: ToolWindow? = null
+    lateinit var toolWindow: ToolWindow
 
-    var homeTabContent: BacklogHomeTab? = null
+    var pullRequestService: PullRequestService
+
+    var homeTab: BacklogHomeTab
     var tabs: MutableMap<Long, Content> = mutableMapOf()
-
-    var pullRequestService: PullRequestService? = null
 
     init {
         thisLogger().warn("[backlog] " + "ToolWindowService.init")
         pullRequestService = project.service<PullRequestService>()
 
-
-        // create listener
-        val listener = object : PullRequestSelectionListener {
-            override fun onPullRequestSelected(pullRequest: PullRequest) {
-                println("Selected Pull Request: ${pullRequest.summary}")
-                tryGetPullRequestTabContent(pullRequest)
-            }
-        }
-        homeTabContent = BacklogHomeTab(listener)
-
-        getPullRequests()
-
+//        getPullRequests()
+        // subscribe to update topic
         project.messageBus.connect().subscribe(
             UPDATE_TOPIC,
             object : ToolWindowNotifier {
@@ -63,87 +51,100 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                     getPullRequests()
                 }
             })
+
+        // create home tab
+        val pullRequestListener = object : PullRequestSelectionListener {
+            override fun onPullRequestSelected(pullRequest: PullRequest) {
+                println("Selected Pull Request: ${pullRequest.summary}")
+                tryGetPullRequestTabContent(pullRequest)
+            }
+        }
+        homeTab = BacklogHomeTab(pullRequestListener)
+
+        // set to tool window
+        val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
+        if (window != null) {
+            toolWindow = window
+
+            val homeTab = homeTab.getContent()
+            val contentFactory = ContentFactory.getInstance()
+            val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
+            val content = contentFactory.createContent(homeTab, tabTitle, false)
+            content.isCloseable = false
+
+            toolWindow.contentManager.addContent(content)
+        }
+
     }
 
     fun getPullRequests() {
         thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
         cs.launch {
             withContext(Dispatchers.IO) {
-                val pullRequests = pullRequestService?.getPullRequests()
+                val pullRequests = pullRequestService.getPullRequests()
                 if (pullRequests != null) {
                     pullRequests.reverse()
-                    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
-                    val contentManager = toolWindow!!.contentManager
-                    val homeTab = contentManager.findContent(MyBundle.message("toolWindowHomeTabTitle")).component as BacklogHomeTab
+                    val contentManager = toolWindow.contentManager
+                    val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
+                    val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
                     homeTab.update(pullRequests)
                 }
             }
         }
     }
 
-    fun createHomeTabContent(pullRequests: ResponseList<PullRequest>? = null): JBPanel<JBPanel<*>> {
-        thisLogger().warn("[backlog] " + "ToolWindowService.CreateHomeTab")
-        if (toolWindow != null) {
-            // ツールウィンドウを取得
-            val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
-            if (toolWindow != null) {
-                // UIスレッドで実行
-                ApplicationManager.getApplication().invokeLater {
-                    val panel = toolWindow.contentManager.getContent(0)!!.component as BacklogHomeTab
-                    panel.update(pullRequests)
-                }
-            }
-        }
-
-        return homeTabContent!!.getContent()
-    }
-
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
-        val contentManager = toolWindow!!.contentManager
+        val contentManager = toolWindow.contentManager
         if (contentManager.findContent(pullRequest.number.toString()) != null) {
             // select tab
             val content = contentManager.findContent(pullRequest.number.toString())!!
-            toolWindow.contentManager.setSelectedContent(content, true, true)
+            contentManager.setSelectedContent(content, true, true)
         } else {
             // create tab
             createPullRequestTabContent(pullRequest)
         }
     }
 
+    private val diffListener = object : DiffSelectionListener {
+        override fun onDiffSelected(change: Change) {
+            showDiff(change)
+        }
+    }
+    private val commitListener = object : CommitSelectionListener {
+        override fun onCommitSelected(commit: GitCommit) {
+            thisLogger().warn("Commit selected")
+            showCommit(commit)
+        }
+    }
+
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
-        if (toolWindow != null) {
-            // コルーチンを使って変更を取得
-            cs.launch {
-                withContext(Dispatchers.IO) {
-                    val changes = pullRequestService?.getChanges(pullRequest)
-                    val commits = pullRequestService?.getCommits(pullRequest)
-                    val attachments = pullRequestService?.getAttachments(pullRequest)
-                    ApplicationManager.getApplication().invokeLater {
-                        val diffListener = object : DiffSelectionListener {
-                            override fun onDiffSelected(change: Change) {
-                                showDiff(change)
-                            }
-                        }
-                        val commitListener = object : CommitSelectionListener {
-                            override fun onCommitSelected(commit: GitCommit) {
-                                thisLogger().warn("Commit selected")
-                                showCommit(commit)
-                            }
-                        }
-                        val tabContent =
-                            BacklogPRDetailTab(pullRequest, project.basePath, changes, diffListener, commits, commitListener, pullRequest.attachments, attachments).create()
-                        val content =
-                            ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
-                        content.setDisposer { tabs.remove(pullRequest.number) }
-                        val contentManager = toolWindow!!.contentManager
-                        thisLogger().warn(content.isCloseable.toString())
-                        contentManager.addContent(content)
-                        contentManager.setSelectedContent(content, true, true)
-                        tabs[pullRequest.number] = content
-                    }
+        cs.launch {
+            withContext(Dispatchers.IO) {
+                val changes = pullRequestService.getChanges(pullRequest)
+                val commits = pullRequestService.getCommits(pullRequest)
+                val attachments = pullRequestService.getAttachments(pullRequest)
+                ApplicationManager.getApplication().invokeLater {
+                    val tabContent =
+                        BacklogPRDetailTab(
+                            pullRequest,
+                            project.basePath,
+                            changes,
+                            diffListener,
+                            commits,
+                            commitListener,
+                            pullRequest.attachments,
+                            attachments
+                        ).create()
+                    val content =
+                        ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
+                    content.setDisposer { tabs.remove(pullRequest.number) }
+                    val contentManager = toolWindow.contentManager
+                    thisLogger().warn(content.isCloseable.toString())
+                    contentManager.addContent(content)
+                    contentManager.setSelectedContent(content, true, true)
+                    tabs[pullRequest.number] = content
                 }
             }
         }

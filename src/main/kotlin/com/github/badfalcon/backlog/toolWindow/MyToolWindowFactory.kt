@@ -18,14 +18,7 @@ class MyToolWindowFactory : ToolWindowFactory {
         thisLogger().warn("[backlog] "+ "createToolWindowContent")
         println("createToolWindowContent")
         // initialize tool window service
-        val service = toolWindow.project.service<ToolWindowService>()
-        service.toolWindow = toolWindow
-
-        // create home tab
-        val homeTab = service.createHomeTabContent(null)
-        val content = ContentFactory.getInstance().createContent(homeTab, MyBundle.message("toolWindowHomeTabTitle"), false)
-        content.isCloseable = false
-        toolWindow.contentManager.addContent(content)
+        val service = project.service<ToolWindowService>()
     }
 
     override fun shouldBeAvailable(project: Project) = true
