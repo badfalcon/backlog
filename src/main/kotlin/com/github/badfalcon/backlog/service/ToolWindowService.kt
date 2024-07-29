@@ -82,13 +82,11 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         cs.launch {
             withContext(Dispatchers.IO) {
                 val pullRequests = pullRequestService.getPullRequests()
-                if (pullRequests != null) {
-                    pullRequests.reverse()
-                    val contentManager = toolWindow.contentManager
-                    val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
-                    val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
-                    homeTab.update(pullRequests)
-                }
+                pullRequests?.reverse()
+                val contentManager = toolWindow.contentManager
+                val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
+                val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
+                homeTab.update(pullRequests)
             }
         }
     }
