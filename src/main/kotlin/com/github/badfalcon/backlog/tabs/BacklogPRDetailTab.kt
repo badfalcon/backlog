@@ -32,7 +32,7 @@ class BacklogPRDetailTab(
     commits: MutableList<GitCommit>?,
     commitSelectionListener: CommitSelectionListener,
     attachments: MutableList<Attachment>?,
-    attachmentData: MutableList<AttachmentData>?
+    attachmentData: MutableList<AttachmentData>
 ) : JBPanel<JBPanel<*>>()  {
     private val basePath = Path(basePathStr?:"")
 
@@ -185,7 +185,7 @@ interface CommitSelectionListener {
     fun onCommitSelected(commit: GitCommit)
 }
 
-private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>?) : HtmlPanel(){
+private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) : HtmlPanel(){
     init {
         contentType = "text/html"
 
@@ -194,7 +194,7 @@ private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>
         update()
     }
 
-    fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>?) {
+    fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) {
         text = BacklogMarkdownConverter().toHtml(src, attachments, attachmentData)
         update()
     }
