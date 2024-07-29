@@ -14,7 +14,7 @@ import git4idea.GitCommit
 class PullRequestService(private var project: Project) {
     var backlogService: BacklogService
     var gitService: GitService
-
+    val isReady: Boolean get() = backlogService?.isReady == true && gitService?.isReady == true
     init {
         thisLogger().warn("[backlog] "+"PullRequestService.init")
         backlogService = project.service<BacklogService>()

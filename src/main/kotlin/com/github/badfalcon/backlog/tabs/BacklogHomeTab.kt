@@ -1,12 +1,16 @@
 package com.github.badfalcon.backlog.tabs
 
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
+import com.github.badfalcon.backlog.service.BacklogService
+import com.github.badfalcon.backlog.service.GitService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.nulabinc.backlog4j.PullRequest
@@ -57,7 +61,21 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         thisLogger().warn("[backlog] " + "BacklogHomeTab.reload")
         removeAll()
         val scrollableTable = JBScrollPane(pullRequestTable)
+        // get project
+        val project = ProjectManager.getInstance().openProjects[0]
+        // backlogがisReadyならばreadyと表示
+        val backlogReady : Boolean = project.service<BacklogService>().isReady
+        // gitがisReadyならばreadyと表示
+        val gitReady  : Boolean = project.service<GitService>().isReady
         val mainPanel = panel {
+            row {
+                cell(JBLabel("Git"))
+                cell(JBLabel(if(gitReady) "ready" else "not ready"))
+            }.layout(RowLayout.LABEL_ALIGNED)
+            row {
+                cell(JBLabel("Backlog"))
+                cell(JBLabel(if(backlogReady) "ready" else "not ready"))
+            }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
                 cell(statusLabel)
