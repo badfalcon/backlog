@@ -136,9 +136,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                             commitListener,
                             pullRequest.attachments,
                             attachments
-                        ).create()
-                    val content =
-                        ContentFactory.getInstance().createContent(tabContent, pullRequest.number.toString(), false)
+                        )
+                    val contentFactory = ContentFactory.getInstance()
+                    val content = contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
                     content.setDisposer { tabs.remove(pullRequest.number) }
                     val contentManager = toolWindow.contentManager
                     thisLogger().warn(content.isCloseable.toString())

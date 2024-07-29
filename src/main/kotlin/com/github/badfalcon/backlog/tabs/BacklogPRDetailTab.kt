@@ -3,6 +3,7 @@ package com.github.badfalcon.backlog.tabs
 import com.github.badfalcon.backlog.util.BacklogMarkdownConverter
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
@@ -13,8 +14,8 @@ import com.nulabinc.backlog4j.Attachment
 import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
 import git4idea.GitCommit
+import java.awt.BorderLayout
 import java.awt.Component
-import javax.swing.JComponent
 import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 import javax.swing.ListSelectionModel
@@ -26,20 +27,19 @@ import kotlin.io.path.relativeTo
 class BacklogPRDetailTab(
     private val pullRequest: PullRequest,
     basePathStr : String?,
-    private val changes: MutableCollection<Change>?,
-    private val diffSelectionListener: DiffSelectionListener,
-    private val commits: MutableList<GitCommit>?,
-    private val commitSelectionListener: CommitSelectionListener,
-    private val attachments: MutableList<Attachment>?,
-    private val attachmentData: MutableList<AttachmentData>?
-) {
+    changes: MutableCollection<Change>?,
+    diffSelectionListener: DiffSelectionListener,
+    commits: MutableList<GitCommit>?,
+    commitSelectionListener: CommitSelectionListener,
+    attachments: MutableList<Attachment>?,
+    attachmentData: MutableList<AttachmentData>?
+) : JBPanel<JBPanel<*>>()  {
     private val basePath = Path(basePathStr?:"")
 
     init {
         println("BacklogPRDetailTab init")
-    }
+        this.layout = BorderLayout()
 
-    fun create(): JComponent {
         // create overview
         val overviewPanel = panel {
             row("#" + pullRequest.number.toString()) {
@@ -61,12 +61,12 @@ class BacklogPRDetailTab(
         val prpScrollPane = JBScrollPane(pullRequestPanel)
 
         // create changes
-        val changesTable = createChangesTable()
+        val changesTable = createChangesTable(changes, diffSelectionListener)
         val changesPanel = JBScrollPane(changesTable)
         val chScrollPane = JBScrollPane(changesPanel)
 
         // create commits
-        val commitsTable = createCommitsTable()
+        val commitsTable = createCommitsTable(commits, commitSelectionListener)
         val commitsPanel = JBScrollPane(commitsTable)
         val cmScrollPane = JBScrollPane(commitsPanel)
 
@@ -85,11 +85,10 @@ class BacklogPRDetailTab(
                 cell(tabbedPane).align(Align.FILL)
             }.resizableRow()
         }
-
-        return mainPanel
+        add(mainPanel, BorderLayout.CENTER)
     }
 
-    private fun createChangesTable(): JBTable {
+    private fun createChangesTable(changes: MutableCollection<Change>?, diffSelectionListener: DiffSelectionListener): JBTable {
         val columnNames = arrayOf("File Status", "File Name")
         val data = changes?.map {
             arrayOf(it.fileStatus.toString(), getFileName(it))
@@ -115,10 +114,11 @@ class BacklogPRDetailTab(
         }
 
         autoResizeTableColumns(changesTable)
+
         return changesTable
     }
 
-    private fun createCommitsTable(): JBTable {
+    private fun createCommitsTable(commits: MutableList<GitCommit>?, commitSelectionListener: CommitSelectionListener): JBTable {
         val columnNames = arrayOf("Commit Hash", "Commit Message")
         val data = commits?.map {
             arrayOf(it.id.toShortString(), it.fullMessage)
