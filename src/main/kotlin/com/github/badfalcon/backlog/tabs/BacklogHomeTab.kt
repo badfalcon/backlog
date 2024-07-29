@@ -48,7 +48,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         this.update(pullRequests)
 
         this.layout = BorderLayout()
-        reload()
+        reload(false)
     }
 
     fun getContent() = this
@@ -98,9 +98,9 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         // auto resize columns
         autoResizeTableColumns(pullRequestTable)
 
-        pullRequestTable.isEnabled = pullRequests != null
+        pullRequestTable.isEnabled = true
 
-        reload(pullRequests != null)
+        reload(true)
     }
 
     private fun createTableModel(pullRequests: ResponseList<PullRequest>?): DefaultTableModel {
