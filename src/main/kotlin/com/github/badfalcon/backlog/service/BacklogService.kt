@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.nulabinc.backlog4j.*
 import com.nulabinc.backlog4j.api.option.PullRequestQueryParams
+import com.nulabinc.backlog4j.conf.BacklogComConfigure
 import com.nulabinc.backlog4j.conf.BacklogConfigure
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure
 
@@ -18,14 +19,19 @@ class BacklogService(project: Project) {
     var projectKey: String = ""
     var repoId: Long = 0
 
+    enum class TopLevelDomain(val value: String) {
+        COM("com"),
+        JP("jp"),
+    }
+
     init {
         thisLogger().warn("[backlog] "+ "BacklogService.init")
 
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
 
         if (settings.apiKey != "" && settings.workspaceName != "") {
-            val configure: BacklogConfigure = BacklogJpConfigure(settings.workspaceName).apiKey(settings.apiKey)
-            if (isValidBacklogConfigs(settings.workspaceName, settings.apiKey)) {
+            val configure: BacklogConfigure? = isValidBacklogConfigs(settings.workspaceName, settings.apiKey, settings.topLevelDomain)
+            if (configure != null) {
                 backlogClient = BacklogClientFactory(configure).newClient()
                 val messageBus = project.messageBus
                 val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
@@ -37,18 +43,31 @@ class BacklogService(project: Project) {
     /**
      * Checks if the passed values are valid for backlog
      */
-    fun isValidBacklogConfigs(workspaceName: String, apiKey: String): Boolean {
+    fun isValidBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure? {
         thisLogger().warn("[backlog] "+ "BacklogService.isValidBacklogConfigs")
         if (workspaceName == "" || apiKey == "") {
-            return false
+            return null
         }
-        val configure: BacklogConfigure = BacklogJpConfigure(workspaceName).apiKey(apiKey)
+
+        val configure: BacklogConfigure = when (topLevelDomain) {
+            TopLevelDomain.JP -> {
+                BacklogJpConfigure(workspaceName).apiKey(apiKey)
+            }
+
+            TopLevelDomain.COM -> {
+                BacklogComConfigure(workspaceName).apiKey(apiKey)
+            }
+        }
         val newClient: BacklogClient = BacklogClientFactory(configure).newClient()
-        if (newClient.myself.name != null) {
-            backlogClient = newClient
-            return true
+        try {
+            if (newClient.myself.name != null) {
+                backlogClient = newClient
+                return configure
+            }
+        } catch (e: Exception) {
+            return null
         }
-        return false
+        return null
     }
 
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{

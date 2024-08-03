@@ -1,5 +1,6 @@
 package com.github.badfalcon.backlog.config
 
+import com.github.badfalcon.backlog.service.BacklogService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -12,6 +13,7 @@ class MyPluginSettingsState : PersistentStateComponent<MyPluginSettingsState> {
     var workspaceName: String = ""
     var apiKey: String = ""
     var projectName: String = ""
+    var topLevelDomain: BacklogService.TopLevelDomain = BacklogService.TopLevelDomain.COM
 
     companion object {
         fun getInstance(): MyPluginSettingsState {

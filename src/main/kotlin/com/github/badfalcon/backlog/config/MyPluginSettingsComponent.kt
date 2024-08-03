@@ -4,11 +4,12 @@ import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.FormBuilder
-import javax.swing.BoxLayout
+import com.intellij.ui.dsl.builder.*
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -18,30 +19,42 @@ import javax.swing.JPanel
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
 class MyPluginSettingsComponent(private var project: Project) {
-    val panel: JPanel
+    val panel: DialogPanel
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()
     private val myProjectNameText = JBTextField()
+    private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
 
-    private val myButtonPanel = JPanel()
-    private val myInputCheckButton = JButton("Check Status")
+    private val myInputCheckButton = JButton("run")
     private val myInputStatusCheckLabel = JBLabel()
 
     init {
         setupButtonAction()
+        panel = panel {
+            row {
+                cell(JBLabel("Backlog")).bold()
+            }
+            group("Backlog Settings") {
+                row("workspace info: ") {
+                    cell (JBLabel("https://")).gap(RightGap.SMALL)
+                    cell(myWorkspaceNameText).gap(RightGap.SMALL)
+                    cell (JBLabel(".backlog.")).gap(RightGap.SMALL)
+                    cell (comboBox)
+                }.layout(RowLayout.LABEL_ALIGNED)
+                row("api key: ") {
+                    cell(myApiKeyText).resizableColumn().align(AlignX.FILL)
+                }.layout(RowLayout.LABEL_ALIGNED)
+                row("project name: ") {
+                    cell(myProjectNameText).resizableColumn().align(AlignX.FILL)
+                }.layout(RowLayout.LABEL_ALIGNED)
+                row("Check Valid: ") {
+                    cell(myInputCheckButton)
+                    cell(myInputStatusCheckLabel)
+                }.layout(RowLayout.LABEL_ALIGNED)
+            }
+        }
 
-        panel = FormBuilder.createFormBuilder()
-            .addLabeledComponent(JBLabel("Enter workspace name: "), myWorkspaceNameText, 1, false)
-            .addLabeledComponent(JBLabel("Enter api key: "), myApiKeyText, 1, false)
-            .addLabeledComponent(JBLabel("(option)Enter project name:"), myProjectNameText, 1, false)
-            .addComponent(myButtonPanel, 1)  // ボタンとステータスラベルを含むパネルを追加します
-            .addComponentFillVertically(JPanel(), 0).panel
-
-        // テストボタンのレイアウト設定(ボタンとラベルの横並びのため)
-        myButtonPanel.layout = BoxLayout(myButtonPanel, BoxLayout.X_AXIS)  // パネルを横並びに配置するためにBoxLayoutを使用します
-        myButtonPanel.add(myInputCheckButton)
-        myButtonPanel.add(myInputStatusCheckLabel)
-        myInputStatusCheckLabel.isVisible = false  // 初期状態では非表示にします
+        myInputStatusCheckLabel.isVisible = false
     }
 
     val preferredFocusedComponent: JComponent
@@ -65,11 +78,22 @@ class MyPluginSettingsComponent(private var project: Project) {
             myProjectNameText.text = newText
         }
 
+    var topLevelDomain: BacklogService.TopLevelDomain
+        get() {
+            val selectedValue = comboBox.selectedItem as String
+            return BacklogService.TopLevelDomain.entries.first { it.value == selectedValue }
+        }
+        set(newSelection) {
+            comboBox.selectedItem = newSelection.value
+        }
+
     private fun setupButtonAction() {
         myInputCheckButton.addActionListener {
             if(workspaceNameText != "" && apiKeyText != ""){
                 // check if the values are valid
-                val isValid : Boolean = project.service<BacklogService>().isValidBacklogConfigs(workspaceNameText, apiKeyText)
+                val backlogService = project.service<BacklogService>()
+                val config = backlogService.isValidBacklogConfigs(workspaceNameText, apiKeyText, topLevelDomain)
+                val isValid : Boolean = config != null
 
                 updateStatus(isValid)
                 if ( isValid){

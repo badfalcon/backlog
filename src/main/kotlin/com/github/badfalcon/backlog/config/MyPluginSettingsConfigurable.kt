@@ -35,6 +35,8 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
         var modified: Boolean = (mySettingsComponent?.workspaceNameText != settings.workspaceName)
         modified = modified or (mySettingsComponent?.apiKeyText != settings.apiKey)
+        modified = modified or (mySettingsComponent?.topLevelDomain != settings.topLevelDomain)
+        modified = modified or (mySettingsComponent?.projectNameText != settings.projectName)
         return modified
     }
 
@@ -42,6 +44,8 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
         settings.workspaceName = mySettingsComponent?.workspaceNameText!!
         settings.apiKey = mySettingsComponent?.apiKeyText!!
+        settings.topLevelDomain = mySettingsComponent?.topLevelDomain!!
+        settings.projectName = mySettingsComponent?.projectNameText!!
         println("https://${settings.workspaceName}.backlog.jp/api/v2/users/myself?apiKey=${settings.apiKey}")
     }
 
@@ -49,6 +53,8 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
         mySettingsComponent?.workspaceNameText = settings.workspaceName
         mySettingsComponent?.apiKeyText = settings.apiKey
+        mySettingsComponent?.topLevelDomain = settings.topLevelDomain
+        mySettingsComponent?.projectNameText = settings.projectName
     }
 
     override fun disposeUIResources() {
