@@ -29,10 +29,22 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
     var pullRequestTable: JBTable = JBTable(createTableModel(null))
 
+    var pullRequests: ResponseList<PullRequest>? = null
+
     init {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
         // create pull request selection table
         pullRequestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        // set selection listener
+        pullRequestTable.selectionModel.addListSelectionListener { e ->
+            if (!e.valueIsAdjusting) {
+                val lsm: ListSelectionModel = e.source as ListSelectionModel
+                if (!lsm.isSelectionEmpty) {
+                    val selectedRow = lsm.minSelectionIndex
+                    pullRequestSelectionListener.onPullRequestSelected(this.pullRequests!![selectedRow])
+                }
+            }
+        }
 
         // create reload button action
         reloadButton.apply {
@@ -100,18 +112,8 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
     fun update(pullRequests: ResponseList<PullRequest>?) {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
-        pullRequestTable.model = createTableModel(pullRequests)
-
-        // set selection listener
-        pullRequestTable.selectionModel.addListSelectionListener { e ->
-            if (!e.valueIsAdjusting) {
-                val lsm: ListSelectionModel = e.source as ListSelectionModel
-                if (!lsm.isSelectionEmpty) {
-                    val selectedRow = lsm.minSelectionIndex
-                    pullRequestSelectionListener.onPullRequestSelected(pullRequests!![selectedRow])
-                }
-            }
-        }
+        this.pullRequests = pullRequests
+        pullRequestTable.model = createTableModel(this.pullRequests)
 
         // auto resize columns
         autoResizeTableColumns(pullRequestTable)
