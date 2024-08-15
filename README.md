@@ -117,8 +117,6 @@ This plugin allows you to view Backlog pull requests (PRs) directly within Intel
 - API key
 - Project name
 
-[//]: # (todo あっているか確認)
-
 ### Support
 If you encounter any problems or have suggestions, please create an Issue on GitHub.
 
