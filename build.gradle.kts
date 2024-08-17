@@ -45,6 +45,8 @@ dependencies {
     }
 
     implementation("com.nulab-inc:backlog4j:2.6.0")
+
+    testImplementation("org.opentest4j:opentest4j:1.3.0")
 }
 
 // Set the JVM language level used to build the project.
