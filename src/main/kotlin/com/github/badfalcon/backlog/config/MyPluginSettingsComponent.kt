@@ -23,7 +23,7 @@ class MyPluginSettingsComponent(private var project: Project) {
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()
     private val myProjectNameText = JBTextField()
-    private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
+    private val comboBox = ComboBox(BacklogService.TopLevelDomain.values().map { it.value }.toTypedArray())
 
     private val myInputCheckButton = JButton("run")
     private val myInputStatusCheckLabel = JBLabel()
@@ -81,7 +81,7 @@ class MyPluginSettingsComponent(private var project: Project) {
     var topLevelDomain: BacklogService.TopLevelDomain
         get() {
             val selectedValue = comboBox.selectedItem as String
-            return BacklogService.TopLevelDomain.entries.first { it.value == selectedValue }
+            return BacklogService.TopLevelDomain.values().first { it.value == selectedValue }
         }
         set(newSelection) {
             comboBox.selectedItem = newSelection.value
