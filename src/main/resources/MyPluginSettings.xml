@@ -1,0 +1,9 @@
+<application>
+    <component name="MyPluginSettingsState">
+        <state>
+            <workspaceName></workspaceName>
+            <apiKey></apiKey>
+            <topLevelDomain></topLevelDomain>
+        </state>
+    </component>
+</application>
