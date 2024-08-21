@@ -9,7 +9,7 @@
 - [x] Get familiar with the [template documentation][template].
 - [x] Adjust the [pluginGroup](./gradle.properties), [plugin ID](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
 - [x] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
+- [x] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
 - [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
 - [ ] Set the `PLUGIN_ID` in the above README badges.
 - [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
@@ -17,60 +17,7 @@
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-[日本語](#概要) | [English](#overview)
-
-### 概要
-このプラグインは、IntelliJ IDEA上でBacklogのプルリクエスト（PR）を直接確認できるようにするものです。   
-IDEを離れることなく、効率的にコードレビューを行うことができます。
-
-### 主要機能
-- IntelliJ IDEA内でBacklogのPRリストの表示
-- PRの詳細情報の閲覧
-- コミットごとの変更点の確認
-- ファイルごとの変更点の確認
-
-### 今後追加予定の機能
-- コメントの表示と追加
-
-### インストール方法 (マーケットプレイス)
-1. IntelliJ IDEAを開きます。
-1. 「設定/環境設定」を開きます。
-1. 「プラグイン」セクションに移動します。
-1. 「マーケットプレイス」タブで "Backlog PR Viewer" を検索します。
-1. 「インストール」ボタンをクリックします。
-1. IDEを再起動して、プラグインを有効にします。
-
-### インストール方法 (手動)
-1. [最新のリリース](https://github.com/badfalcon/backlog/releases/latest)をダウンロードします。
-2. IntelliJ IDEAを開きます。
-3. <kbd>設定/環境設定</kbd> > <kbd>プラグイン</kbd> > <kbd>⚙️</kbd> > <kbd>ディスクからプラグインをインストール...</kbd> の順に選択します。
-4. ダウンロードしたプラグインファイルを選択してインストールします。
-5. IDEを再起動して、プラグインを有効にします。
-
-### 初期設定
-1. IDEの「設定/環境設定」を開きます。
-1. 「ツール」セクションに移動し、「Backlog」サブセクションを選択します。
-1. Backlogの認証情報（サーバーURL、APIキー、プロジェクトキーなど）を入力します。
-1. 「適用」をクリックし、設定を保存します。
-
-### 使用方法
-1. IDEのツールバーまたはメニューから「Backlog PR Viewer」を開きます。
-1. PRをクリックして詳細を確認します。
-1. 「コミット」タブを選択し、各コミットの変更点を確認します。
-1. 「ファイル」タブを選択し、ファイルごとの変更点を確認します。
-
-### 設定
-- BacklogのワークスペースのURL
-- APIキー
-- プロジェクト名
-
-### サポート
-問題や提案がある場合は、GitHubのIssueを作成してください。
-
-### ライセンス
-このプラグインは[Apache License 2.0]の下で公開されています。詳細は`LICENSE`ファイルを参照してください。
-
----
+[English](#overview) | [日本語](#概要)
 
 ### Overview
 This plugin allows you to view Backlog pull requests (PRs) directly within IntelliJ IDEA. It enables efficient code review without leaving your IDE.
@@ -122,6 +69,59 @@ If you encounter any problems or have suggestions, please create an Issue on Git
 
 ### License
 This plugin is released under the [Apache License 2.0]. See the `LICENSE` file for details.
+
+---
+
+### 概要
+このプラグインは、IntelliJ IDEA上でBacklogのプルリクエスト（PR）を直接確認できるようにするものです。   
+IDEを離れることなく、効率的にコードレビューを行うことができます。
+
+### 主要機能
+- IntelliJ IDEA内でBacklogのPRリストの表示
+- PRの詳細情報の閲覧
+- コミットごとの変更点の確認
+- ファイルごとの変更点の確認
+
+### 今後追加予定の機能
+- コメントの表示と追加
+
+### インストール方法 (マーケットプレイス)
+1. IntelliJ IDEAを開きます。
+1. 「設定/環境設定」を開きます。
+1. 「プラグイン」セクションに移動します。
+1. 「マーケットプレイス」タブで "Backlog PR Viewer" を検索します。
+1. 「インストール」ボタンをクリックします。
+1. IDEを再起動して、プラグインを有効にします。
+
+### インストール方法 (手動)
+1. [最新のリリース](https://github.com/badfalcon/backlog/releases/latest)をダウンロードします。
+2. IntelliJ IDEAを開きます。
+3. <kbd>設定/環境設定</kbd> > <kbd>プラグイン</kbd> > <kbd>⚙️</kbd> > <kbd>ディスクからプラグインをインストール...</kbd> の順に選択します。
+4. ダウンロードしたプラグインファイルを選択してインストールします。
+5. IDEを再起動して、プラグインを有効にします。
+
+### 初期設定
+1. IDEの「設定/環境設定」を開きます。
+1. 「ツール」セクションに移動し、「Backlog」サブセクションを選択します。
+1. Backlogの認証情報（サーバーURL、APIキー、プロジェクトキーなど）を入力します。
+1. 「適用」をクリックし、設定を保存します。
+
+### 使用方法
+1. IDEのツールバーまたはメニューから「Backlog PR Viewer」を開きます。
+1. PRをクリックして詳細を確認します。
+1. 「コミット」タブを選択し、各コミットの変更点を確認します。
+1. 「ファイル」タブを選択し、ファイルごとの変更点を確認します。
+
+### 設定
+- BacklogのワークスペースのURL
+- APIキー
+- プロジェクト名
+
+### サポート
+問題や提案がある場合は、GitHubのIssueを作成してください。
+
+### ライセンス
+このプラグインは[Apache License 2.0]の下で公開されています。詳細は`LICENSE`ファイルを参照してください。
 
 <!-- Plugin description end -->
 
