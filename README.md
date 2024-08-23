@@ -20,7 +20,7 @@
 [English](#overview) | [日本語](#概要)
 
 ### Overview
-This plugin allows you to view Backlog pull requests (PRs) directly within IntelliJ IDEA. It enables efficient code review without leaving your IDE.
+This plugin allows you to view [Backlog](https://nulab.com/backlog/) pull requests (PRs) directly within IntelliJ IDEA. It enables efficient code review without leaving your IDE.
 
 ### Key Features
 - Display Backlog PR list within IntelliJ IDEA
@@ -73,7 +73,7 @@ This plugin is released under the [Apache License 2.0]. See the `LICENSE` file f
 ---
 
 ### 概要
-このプラグインは、IntelliJ IDEA上でBacklogのプルリクエスト（PR）を直接確認できるようにするものです。   
+このプラグインは、IntelliJ IDEA上で[Backlog](https://backlog.com/ja/)のプルリクエスト（PR）を直接確認できるようにするものです。   
 IDEを離れることなく、効率的にコードレビューを行うことができます。
 
 ### 主要機能
