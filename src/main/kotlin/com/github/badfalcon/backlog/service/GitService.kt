@@ -81,7 +81,7 @@ class GitService(private var project: Project) {
                     continue
                 }
                 println(remote.firstUrl)
-                val backlogUrlRegex = Regex("https://.+\\.jp/git/.+/.+\\.git")
+                val backlogUrlRegex = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
                 if (backlogUrlRegex.containsMatchIn(remote.firstUrl!!)) {
                     result = remote.firstUrl
                     break
