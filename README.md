@@ -16,9 +16,9 @@
 - [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
-<!-- Plugin description -->
 [English](#overview) | [日本語](#概要)
 
+<!-- Plugin description -->
 ### Overview
 This plugin allows you to view [Backlog](https://nulab.com/backlog/) pull requests (PRs) directly within IntelliJ IDEA. It enables efficient code review without leaving your IDE.
 
