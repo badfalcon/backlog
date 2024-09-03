@@ -1,8 +1,8 @@
 # Backlog PR Viewer for IntelliJ
 
 ![Build](https://github.com/badfalcon/backlog/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/PLUGIN_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/25137.svg)](https://plugins.jetbrains.com/plugin/25137)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/25137.svg)](https://plugins.jetbrains.com/plugin/25137)
 
 ## Template ToDo list
 - [x] Create a new [IntelliJ Platform Plugin Template][template] project.
@@ -10,29 +10,32 @@
 - [x] Adjust the [pluginGroup](./gradle.properties), [plugin ID](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
 - [x] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
 - [x] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `PLUGIN_ID` in the above README badges.
+- [x] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
+- [x] Set the `PLUGIN_ID` in the above README badges.
 - [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
 - [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
+- [x] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 [English](#overview) | [日本語](#概要)
 
 <!-- Plugin description -->
 ### Overview
-This plugin allows you to view [Backlog](https://nulab.com/backlog/) pull requests (PRs) directly within IntelliJ IDEA. It enables efficient code review without leaving your IDE.
+This plugin allows you to view [Backlog](https://nulab.com/backlog/) pull requests (PRs) directly within a Jetbrains IDE. It enables efficient code review without leaving your IDE.
 
 ### Key Features
-- Display Backlog PR list within IntelliJ IDEA
+- Display Backlog PR list within the Jetbrains IDE
 - View PR details
 - Check changes for each commit
 - Review file-by-file changes
 
 ### Planned Features
 - View and add comments
+- Revamp the Tab Views
+- OAuth2.0 Support
+- I18n Support
 
 ### Installation (from Marketplace)
-1. Open IntelliJ IDEA.
+1. Open a Jetbrains IDE.
 2. Go to Settings/Preferences.
 3. Navigate to the "Plugins" section.
 4. Search for "Backlog PR Viewer" in the Marketplace tab.
@@ -41,7 +44,7 @@ This plugin allows you to view [Backlog](https://nulab.com/backlog/) pull reques
 
 ### Installation (Manually)
 1. Download the [latest release](https://github.com/badfalcon/backlog/releases/latest).
-2. Open IntelliJ IDEA.
+2. Open a Jetbrains IDE.
 3. Go to <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 4. Select the downloaded plugin file to install it.
 5. Restart the IDE to activate the plugin.
@@ -73,20 +76,23 @@ This plugin is released under the [Apache License 2.0]. See the `LICENSE` file f
 ---
 
 ### 概要
-このプラグインは、IntelliJ IDEA上で[Backlog](https://backlog.com/ja/)のプルリクエスト（PR）を直接確認できるようにするものです。   
+このプラグインは、Jetbrains IDE上で[Backlog](https://backlog.com/ja/)のプルリクエスト（PR）を直接確認できるようにするものです。   
 IDEを離れることなく、効率的にコードレビューを行うことができます。
 
 ### 主要機能
-- IntelliJ IDEA内でBacklogのPRリストの表示
+- Jetbrains IDE内でBacklogのPRリストの表示
 - PRの詳細情報の閲覧
 - コミットごとの変更点の確認
 - ファイルごとの変更点の確認
 
 ### 今後追加予定の機能
 - コメントの表示と追加
+- タブビューの見直し
+- OAuth2.0のサポート
+- 多言語対応
 
 ### インストール方法 (マーケットプレイス)
-1. IntelliJ IDEAを開きます。
+1. Jetbrains IDEを開きます。
 1. 「設定/環境設定」を開きます。
 1. 「プラグイン」セクションに移動します。
 1. 「マーケットプレイス」タブで "Backlog PR Viewer" を検索します。
@@ -95,7 +101,7 @@ IDEを離れることなく、効率的にコードレビューを行うこと�
 
 ### インストール方法 (手動)
 1. [最新のリリース](https://github.com/badfalcon/backlog/releases/latest)をダウンロードします。
-2. IntelliJ IDEAを開きます。
+2. Jetbrains IDEを開きます。
 3. <kbd>設定/環境設定</kbd> > <kbd>プラグイン</kbd> > <kbd>⚙️</kbd> > <kbd>ディスクからプラグインをインストール...</kbd> の順に選択します。
 4. ダウンロードしたプラグインファイルを選択してインストールします。
 5. IDEを再起動して、プラグインを有効にします。
