@@ -32,7 +32,7 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
     }
 
     override fun isModified(): Boolean {
-        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
+        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
         var modified: Boolean = (mySettingsComponent?.workspaceNameText != settings.workspaceName)
         modified = modified or (mySettingsComponent?.apiKeyText != settings.apiKey)
         modified = modified or (mySettingsComponent?.topLevelDomain != settings.topLevelDomain)
@@ -41,7 +41,7 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
     }
 
     override fun apply() {
-        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
+        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
         settings.workspaceName = mySettingsComponent?.workspaceNameText!!
         settings.apiKey = mySettingsComponent?.apiKeyText!!
         settings.topLevelDomain = mySettingsComponent?.topLevelDomain!!
@@ -50,7 +50,7 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
     }
 
     override fun reset() {
-        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
+        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
         mySettingsComponent?.workspaceNameText = settings.workspaceName
         mySettingsComponent?.apiKeyText = settings.apiKey
         mySettingsComponent?.topLevelDomain = settings.topLevelDomain

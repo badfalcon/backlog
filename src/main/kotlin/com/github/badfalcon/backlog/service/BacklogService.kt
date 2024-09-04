@@ -27,7 +27,7 @@ class BacklogService(project: Project) {
     init {
         thisLogger().warn("[backlog] "+ "BacklogService.init")
 
-        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance()
+        val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
 
         if (settings.apiKey != "" && settings.workspaceName != "") {
             val configure: BacklogConfigure? = isValidBacklogConfigs(settings.workspaceName, settings.apiKey, settings.topLevelDomain)
