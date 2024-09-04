@@ -3,3 +3,7 @@
 .qodana
 build
 .intellijPlatform
+
+# singing
+*.pem
+*.crt
