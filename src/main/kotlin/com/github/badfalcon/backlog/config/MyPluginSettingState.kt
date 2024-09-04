@@ -3,9 +3,10 @@ package com.github.badfalcon.backlog.config
 import com.github.badfalcon.backlog.service.BacklogService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(
     name = "com.github.badfalcon.backlog.MyPluginSettingsState",
     storages = [Storage("MyPluginSettings.xml")])
@@ -16,8 +17,8 @@ class MyPluginSettingsState : PersistentStateComponent<MyPluginSettingsState> {
     var topLevelDomain: BacklogService.TopLevelDomain = BacklogService.TopLevelDomain.COM
 
     companion object {
-        fun getInstance(): MyPluginSettingsState {
-            return ApplicationManager.getApplication().getService(MyPluginSettingsState::class.java)
+        fun getInstance(project: Project): MyPluginSettingsState {
+            return project.service<MyPluginSettingsState>()
         }
     }
 
