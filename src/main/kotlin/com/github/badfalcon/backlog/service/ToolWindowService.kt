@@ -1,6 +1,6 @@
 package com.github.badfalcon.backlog.service
 
-import com.github.badfalcon.backlog.MyBundle
+import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.notifier.ToolWindowNotifier
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.tabs.*
@@ -68,7 +68,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
             val homeTab = homeTab.getContent()
             val contentFactory = ContentFactory.getInstance()
-            val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
+            val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
             val content = contentFactory.createContent(homeTab, tabTitle, false)
             content.isCloseable = false
 
@@ -84,7 +84,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 val pullRequests = pullRequestService.getPullRequests()
                 pullRequests?.reverse()
                 val contentManager = toolWindow.contentManager
-                val tabTitle = MyBundle.message("toolWindowHomeTabTitle")
+                val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
                 val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
                 homeTab.update(pullRequests)
             }
