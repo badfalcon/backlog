@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent
 
 
-class MyPluginSettingsConfigurable(private var project: Project) : Configurable {
-    private var mySettingsComponent: MyPluginSettingsComponent? = MyPluginSettingsComponent(project)
+class BacklogSettingsConfigurable(private var project: Project) : Configurable {
+    private var mySettingsComponent: BacklogSettingsComponent? = BacklogSettingsComponent(project)
 
     @Nls(capitalization = Nls.Capitalization.Title)
     override fun getDisplayName(): String {
@@ -24,9 +24,9 @@ class MyPluginSettingsConfigurable(private var project: Project) : Configurable 
 
     @Nullable
     override fun createComponent(): JComponent? {
-        thisLogger().warn("[backlog] "+ "MyPluginSettingsConfigurable.createComponent")
+        thisLogger().warn("[backlog] "+ "BacklogSettingsConfigurable.createComponent")
         if(mySettingsComponent == null){
-            mySettingsComponent = MyPluginSettingsComponent(project)
+            mySettingsComponent = BacklogSettingsComponent(project)
         }
         return mySettingsComponent?.panel
     }
