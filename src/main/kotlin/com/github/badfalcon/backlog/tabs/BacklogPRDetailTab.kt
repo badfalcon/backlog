@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.HtmlPanel
 import com.nulabinc.backlog4j.Attachment
 import com.nulabinc.backlog4j.AttachmentData
@@ -20,6 +21,8 @@ import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableCellRenderer
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -61,7 +64,7 @@ class BacklogPRDetailTab(
         val prpScrollPane = JBScrollPane(pullRequestPanel)
 
         // create changes
-        val changesTable = createChangesTable(changes, diffSelectionListener)
+        val changesTable = createChangesTree(changes, diffSelectionListener)
         val changesPanel = JBScrollPane(changesTable)
         val chScrollPane = JBScrollPane(changesPanel)
 
@@ -116,6 +119,30 @@ class BacklogPRDetailTab(
         autoResizeTableColumns(changesTable)
 
         return changesTable
+    }
+
+    private fun createChangesTree(changes: MutableCollection<Change>?, diffSelectionListener: DiffSelectionListener): Tree {
+        val root = DefaultMutableTreeNode("Root")
+
+        changes?.forEach { change ->
+            val node = DefaultMutableTreeNode(getFileName(change))
+            root.add(node)
+        }
+
+        val model = DefaultTreeModel(root)
+        val tree = Tree(model)
+
+        tree.addTreeSelectionListener { e ->
+            val selPath = e.newLeadSelectionPath
+            if (selPath != null) {
+                val node = selPath.lastPathComponent as DefaultMutableTreeNode
+                val selectedIndex = root.getIndex(node)
+                val change = changes!!.elementAt(selectedIndex)
+                diffSelectionListener.onDiffSelected(change);
+            }
+        }
+
+        return tree
     }
 
     private fun createCommitsTable(commits: MutableList<GitCommit>?, commitSelectionListener: CommitSelectionListener): JBTable {
