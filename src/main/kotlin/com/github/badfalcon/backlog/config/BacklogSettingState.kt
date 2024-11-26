@@ -1,7 +1,6 @@
 package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.service.BacklogService
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -9,7 +8,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 @Service(Service.Level.PROJECT)
 @State(
     name = "com.github.badfalcon.backlog.MyPluginSettingsState",
-    storages = [Storage("MyPluginSettings.xml")])
+    storages = [Storage("BacklogSettings.xml")])
 class MyPluginSettingsState : PersistentStateComponent<MyPluginSettingsState> {
     var workspaceName: String = ""
     var apiKey: String = ""

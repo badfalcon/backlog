@@ -7,19 +7,19 @@
     <depends>Git4Idea</depends>
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <resource-bundle>messages.BacklogBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow
-                factoryClass="com.github.badfalcon.backlog.toolWindow.MyToolWindowFactory"
+                factoryClass="com.github.badfalcon.backlog.toolWindow.BacklogToolWindowFactory"
                 id="Backlog"
                 icon="com.github.badfalcon.backlog.icons.BacklogIcons.ToolWindow"
                 canCloseContents="true"/>
 
         <projectConfigurable
                 parentId="tools"
-                instance="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
-                id="com.github.badfalcon.backlog.config.MyPluginSettingsConfigurable"
+                instance="com.github.badfalcon.backlog.config.BacklogSettingsConfigurable"
+                id="com.github.badfalcon.backlog.config.BacklogSettingsConfigurable"
                 displayName="Backlog"
                 nonDefaultProject="false"/>
 

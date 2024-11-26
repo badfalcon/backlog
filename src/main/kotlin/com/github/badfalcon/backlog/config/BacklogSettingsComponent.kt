@@ -18,7 +18,7 @@ import javax.swing.JPanel
 /**
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
-class MyPluginSettingsComponent(private var project: Project) {
+class BacklogSettingsComponent(private var project: Project) {
     val panel: DialogPanel
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()

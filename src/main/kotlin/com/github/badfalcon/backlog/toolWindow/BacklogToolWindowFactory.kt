@@ -1,17 +1,15 @@
 package com.github.badfalcon.backlog.toolWindow
 
-import com.github.badfalcon.backlog.MyBundle
 import com.github.badfalcon.backlog.service.ToolWindowService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.content.ContentFactory
 
-class MyToolWindowFactory : ToolWindowFactory {
+class BacklogToolWindowFactory : ToolWindowFactory {
     init {
-        thisLogger().warn("[backlog] "+ "MyToolWindowFactory.init")
+        thisLogger().warn("[backlog] "+ "BacklogToolWindowFactory.init")
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
