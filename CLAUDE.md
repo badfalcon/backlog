@@ -14,12 +14,12 @@ This document provides comprehensive guidance for AI assistants working with the
 
 ## Tech Stack
 
-- **Language**: Kotlin
+- **Language**: Kotlin 2.3.0
 - **JVM Target**: 17
-- **Build System**: Gradle (Kotlin DSL) with Version Catalog
-- **Platform**: IntelliJ Platform SDK (2023.3+)
+- **Build System**: Gradle 9.3.0 (Kotlin DSL) with Version Catalog
+- **Platform**: IntelliJ Platform SDK (2023.3+, development on 2024.3)
 - **Key Dependencies**:
-  - `backlog4j:2.6.0` - Backlog API client library
+  - `backlog4j:2.7.0` - Backlog API client library
   - `Git4Idea` - Bundled IntelliJ Git plugin (required dependency)
 
 ## Project Structure
