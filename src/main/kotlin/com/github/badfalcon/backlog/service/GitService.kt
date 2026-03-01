@@ -91,6 +91,7 @@ class GitService(private var project: Project) {
         return result
     }
 
+    @Suppress("UnstableApiUsage")
     fun getChanges(baseBranchName: String, targetBranchName: String): MutableCollection<Change>? {
         thisLogger().warn("[backlog] " + "GitService.getChanges")
         if (isReady) {
@@ -113,6 +114,7 @@ class GitService(private var project: Project) {
         return null
     }
 
+    @Suppress("UnstableApiUsage")
     fun getCommits(baseBranchName: String, targetBranchName: String): MutableList<GitCommit>? {
         thisLogger().warn("[backlog] " + "GitService.getCommits")
         if (isReady) {

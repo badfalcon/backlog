@@ -23,7 +23,7 @@ class BacklogSettingsComponent(private var project: Project) {
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()
     private val myProjectNameText = JBTextField()
-    private val comboBox = ComboBox(BacklogService.TopLevelDomain.values().map { it.value }.toTypedArray())
+    private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
 
     private val myInputCheckButton = JButton("run")
     private val myInputStatusCheckLabel = JBLabel()
@@ -35,16 +35,16 @@ class BacklogSettingsComponent(private var project: Project) {
                 cell(JBLabel("Backlog")).bold()
             }
             group("Backlog Settings") {
-                row("workspace info: ") {
+                row("Workspace Info: ") {
                     cell (JBLabel("https://")).gap(RightGap.SMALL)
                     cell(myWorkspaceNameText).gap(RightGap.SMALL)
                     cell (JBLabel(".backlog.")).gap(RightGap.SMALL)
                     cell (comboBox)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("api key: ") {
+                row("API Key: ") {
                     cell(myApiKeyText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("project name: ") {
+                row("Project Name: ") {
                     cell(myProjectNameText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
                 row("Check Valid: ") {
@@ -81,7 +81,7 @@ class BacklogSettingsComponent(private var project: Project) {
     var topLevelDomain: BacklogService.TopLevelDomain
         get() {
             val selectedValue = comboBox.selectedItem as String
-            return BacklogService.TopLevelDomain.values().first { it.value == selectedValue }
+            return BacklogService.TopLevelDomain.entries.first { it.value == selectedValue }
         }
         set(newSelection) {
             comboBox.selectedItem = newSelection.value

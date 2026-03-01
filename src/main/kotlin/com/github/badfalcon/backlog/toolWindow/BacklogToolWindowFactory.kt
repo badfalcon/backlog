@@ -16,7 +16,7 @@ class BacklogToolWindowFactory : ToolWindowFactory {
         thisLogger().warn("[backlog] "+ "createToolWindowContent")
         println("createToolWindowContent")
         // initialize tool window service
-        val service = project.service<ToolWindowService>()
+        project.service<ToolWindowService>()
     }
 
     override fun shouldBeAvailable(project: Project) = true

@@ -60,8 +60,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 publisher.update("reload")
             }
         }
-        val pullRequests: ResponseList<PullRequest>? = null
-        this.update(pullRequests)
+        this.update(null)
 
         this.layout = BorderLayout()
         reload(false)
@@ -124,7 +123,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
     }
 
     private fun createTableModel(pullRequests: ResponseList<PullRequest>?): DefaultTableModel {
-        val columnNames = arrayOf("#", "title", "author", "branch")
+        val columnNames = arrayOf("#", "Title", "Author", "Branch")
         val data = pullRequests?.map {
             arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())
         }?.toTypedArray() ?: arrayOf(arrayOf("", "", "", ""))
@@ -140,10 +139,10 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         val header = table.tableHeader
         val columnModel = table.columnModel
         for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
+            var maxWidth = header.defaultRenderer
                 .getTableCellRendererComponent(
                     table,
-                    header.getColumnModel().getColumn(column).getHeaderValue(),
+                    header.columnModel.getColumn(column).headerValue,
                     false,
                     false,
                     -1,

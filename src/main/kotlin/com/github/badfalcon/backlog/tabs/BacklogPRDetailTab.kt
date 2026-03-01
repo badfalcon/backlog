@@ -147,7 +147,7 @@ class BacklogPRDetailTab(
         return commitsTable
     }
 
-    private fun getFileName(change: Change): String? {
+    private fun getFileName(change: Change): String {
         val fullPathStr = when (change.fileStatus) {
             FileStatus.ADDED -> change.afterRevision?.file?.path
             else -> change.beforeRevision?.file?.path
@@ -162,8 +162,8 @@ class BacklogPRDetailTab(
         val header = table.tableHeader
         val columnModel = table.columnModel
         for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
-                .getTableCellRendererComponent(table, header.getColumnModel().getColumn(column).getHeaderValue(), false, false, -1, column)
+            var maxWidth = header.defaultRenderer
+                .getTableCellRendererComponent(table, header.columnModel.getColumn(column).headerValue, false, false, -1, column)
                 .preferredSize.width
             for (row in 0 until table.rowCount) {
                 val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)
@@ -185,6 +185,7 @@ interface CommitSelectionListener {
     fun onCommitSelected(commit: GitCommit)
 }
 
+@Suppress("UnstableApiUsage")
 private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) : HtmlPanel(){
     init {
         contentType = "text/html"

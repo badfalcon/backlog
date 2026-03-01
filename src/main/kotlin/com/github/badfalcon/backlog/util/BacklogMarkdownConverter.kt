@@ -20,7 +20,7 @@ class BacklogMarkdownConverter {
         for(i in 1 .. 9)
         {
             // replace list groups
-            val listGroupPattern = Regex("""(?:-{${i},}\s.+(?:\r)?\n)+""")
+            val listGroupPattern = Regex("""(?:-{${i},}\s.+\r?\n)+""")
             val listGroupReplacement = "<ul>\n$0</ul>\n"
             result = listGroupPattern.replace(result, listGroupReplacement)
 

@@ -74,9 +74,8 @@ class BacklogService(project: Project) {
         thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
         if (isReady) {
             projectLoop@ for (proj in backlogClient!!.projects) {
-                var repositories: ResponseList<Repository>? = null
-                try {
-                    repositories = backlogClient!!.getGitRepositories(proj.projectKey)
+                val repositories: ResponseList<Repository> = try {
+                    backlogClient!!.getGitRepositories(proj.projectKey)
                 } catch (e: Exception) {
                     continue
                 }
@@ -104,7 +103,7 @@ class BacklogService(project: Project) {
         if (isReady) {
             for (attachment in attachments) {
                 val attachmentId = attachment.id
-                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId);
+                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId)
                 list.add(data)
             }
         }
