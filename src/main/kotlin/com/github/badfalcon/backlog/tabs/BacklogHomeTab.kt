@@ -24,7 +24,7 @@ import javax.swing.table.TableCellRenderer
 
 class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelectionListener) : JBPanel<JBPanel<*>>() {
 
-    val reloadButton: JButton = JButton("reload")
+    val reloadButton: JButton = JButton("Reload")
     val statusLabel: JBLabel = JBLabel()
 
     var pullRequestTable: JBTable = JBTable(createTableModel(null))
@@ -51,7 +51,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             addActionListener {
                 reloadButton.isEnabled = false
                 pullRequestTable.isEnabled = false
-                statusLabel.text = "reloading"
+                statusLabel.text = "Reloading"
 
                 // update window
                 val project = ProjectManager.getInstance().openProjects[0]
@@ -81,11 +81,11 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         val mainPanel = panel {
             row {
                 cell(JBLabel("Git"))
-                cell(JBLabel(if(gitReady) "ready" else "not ready"))
+                cell(JBLabel(if(gitReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(JBLabel("Backlog"))
-                cell(JBLabel(if(backlogReady) "ready" else "not ready"))
+                cell(JBLabel(if(backlogReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
@@ -135,6 +135,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         }
     }
 
+    @Suppress("DuplicatedCode")
     private fun autoResizeTableColumns(table: JBTable) {
         val header = table.tableHeader
         val columnModel = table.columnModel

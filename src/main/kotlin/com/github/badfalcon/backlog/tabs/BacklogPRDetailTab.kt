@@ -45,10 +45,10 @@ class BacklogPRDetailTab(
             row("#" + pullRequest.number.toString()) {
                 label(pullRequest.summary)
             }
-            row("author") {
+            row("Author") {
                 label(pullRequest.createdUser.name)
             }
-            row("branch") {
+            row("Branch") {
                 label (pullRequest.base.toString() + " <- " + pullRequest.branch.toString())
             }
         }
@@ -158,6 +158,7 @@ class BacklogPRDetailTab(
         return relativePath.pathString
     }
 
+    @Suppress("DuplicatedCode")
     private fun autoResizeTableColumns(table: JBTable) {
         val header = table.tableHeader
         val columnModel = table.columnModel
@@ -195,7 +196,7 @@ private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>
         update()
     }
 
-    fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) {
+    private fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) {
         text = BacklogMarkdownConverter().toHtml(src, attachments, attachmentData)
         update()
     }

@@ -64,6 +64,7 @@ class GitService(private var project: Project) {
         }
     }
 
+    @Suppress("UnstableApiUsage")
     fun fetch() {
         thisLogger().warn("[backlog] " + "GitService.fetch")
         if (isReady) {
