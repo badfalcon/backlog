@@ -9,7 +9,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.HtmlPanel
+import javax.swing.JEditorPane
 import com.nulabinc.backlog4j.Attachment
 import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
@@ -185,21 +185,16 @@ interface CommitSelectionListener {
     fun onCommitSelected(commit: GitCommit)
 }
 
-private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) : HtmlPanel(){
+private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) : JEditorPane() {
     init {
         contentType = "text/html"
-
         setBody(src, attachments, attachmentData)
         isEditable = false
-        update()
     }
 
     fun setBody(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) {
         text = BacklogMarkdownConverter().toHtml(src, attachments, attachmentData)
-        update()
-    }
-
-    override fun getBody(): String {
-        return text
+        revalidate()
+        repaint()
     }
 }
