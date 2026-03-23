@@ -80,13 +80,20 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun getPullRequests() {
         thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
         cs.launch {
-            withContext(Dispatchers.IO) {
-                val pullRequests = pullRequestService.getPullRequests()
+            try {
+                val pullRequests = withContext(Dispatchers.IO) {
+                    pullRequestService.getPullRequests()
+                }
                 pullRequests?.reverse()
-                val contentManager = toolWindow.contentManager
-                val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-                val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
-                homeTab.update(pullRequests)
+                ApplicationManager.getApplication().invokeLater {
+                    val contentManager = toolWindow.contentManager
+                    val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
+                    val content = contentManager.findContent(tabTitle) ?: return@invokeLater
+                    val homeTab = content.component as? BacklogHomeTab ?: return@invokeLater
+                    homeTab.update(pullRequests)
+                }
+            } catch (e: Exception) {
+                thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
             }
         }
     }

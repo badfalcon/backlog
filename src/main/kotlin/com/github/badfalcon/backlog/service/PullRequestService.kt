@@ -26,9 +26,12 @@ class PullRequestService(private var project: Project) {
         var result : ResponseList<PullRequest>? = null
         if (backlogService.isReady && gitService.isReady) {
             gitService.fetch()
-            thisLogger().warn("[BLPL]invokeLater")
             val remoteUrl = gitService.getRemoteUrl()
-            result = backlogService.getPullRequests(remoteUrl!!)
+            if (remoteUrl == null) {
+                thisLogger().warn("[backlog] No Backlog remote URL found")
+                return null
+            }
+            result = backlogService.getPullRequests(remoteUrl)
         }
         return result
     }
