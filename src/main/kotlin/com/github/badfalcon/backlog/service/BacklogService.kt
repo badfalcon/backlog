@@ -73,6 +73,8 @@ class BacklogService(project: Project) {
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{
         thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
         if (isReady) {
+            projectKey = ""
+            repoId = 0
             projectLoop@ for (proj in backlogClient!!.projects) {
                 var repositories: ResponseList<Repository>? = null
                 try {

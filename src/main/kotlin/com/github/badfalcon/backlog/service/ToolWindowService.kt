@@ -82,15 +82,18 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         cs.launch {
             try {
                 val pullRequests = withContext(Dispatchers.IO) {
-                    pullRequestService.getPullRequests()
+                    pullRequestService.getPullRequests()?.apply { reverse() }
                 }
-                pullRequests?.reverse()
                 ApplicationManager.getApplication().invokeLater {
-                    val contentManager = toolWindow.contentManager
-                    val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-                    val content = contentManager.findContent(tabTitle) ?: return@invokeLater
-                    val homeTab = content.component as? BacklogHomeTab ?: return@invokeLater
-                    homeTab.update(pullRequests)
+                    try {
+                        val contentManager = toolWindow.contentManager
+                        val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
+                        val content = contentManager.findContent(tabTitle) ?: return@invokeLater
+                        val homeTab = content.component as? BacklogHomeTab ?: return@invokeLater
+                        homeTab.update(pullRequests)
+                    } catch (e: Exception) {
+                        thisLogger().warn("[backlog] Failed to update PR list UI: ${e.message}", e)
+                    }
                 }
             } catch (e: Exception) {
                 thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
