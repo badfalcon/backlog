@@ -80,13 +80,23 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun getPullRequests() {
         thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
         cs.launch {
-            withContext(Dispatchers.IO) {
-                val pullRequests = pullRequestService.getPullRequests()
-                pullRequests?.reverse()
-                val contentManager = toolWindow.contentManager
-                val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-                val homeTab = contentManager.findContent(tabTitle).component as BacklogHomeTab
-                homeTab.update(pullRequests)
+            try {
+                val pullRequests = withContext(Dispatchers.IO) {
+                    pullRequestService.getPullRequests()?.apply { reverse() }
+                }
+                ApplicationManager.getApplication().invokeLater {
+                    try {
+                        val contentManager = toolWindow.contentManager
+                        val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
+                        val content = contentManager.findContent(tabTitle) ?: return@invokeLater
+                        val homeTab = content.component as? BacklogHomeTab ?: return@invokeLater
+                        homeTab.update(pullRequests)
+                    } catch (e: Exception) {
+                        thisLogger().warn("[backlog] Failed to update PR list UI: ${e.message}", e)
+                    }
+                }
+            } catch (e: Exception) {
+                thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
             }
         }
     }
@@ -94,9 +104,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
         val contentManager = toolWindow.contentManager
-        if (contentManager.findContent(pullRequest.number.toString()) != null) {
+        val content = contentManager.findContent(pullRequest.number.toString())
+        if (content != null) {
             // select tab
-            val content = contentManager.findContent(pullRequest.number.toString())!!
             contentManager.setSelectedContent(content, true, true)
         } else {
             // create tab
@@ -119,31 +129,40 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
         cs.launch {
-            withContext(Dispatchers.IO) {
-                val changes = pullRequestService.getChanges(pullRequest)
-                val commits = pullRequestService.getCommits(pullRequest)
-                val attachments = pullRequestService.getAttachments(pullRequest)
-                ApplicationManager.getApplication().invokeLater {
-                    val tabContent =
-                        BacklogPRDetailTab(
-                            pullRequest,
-                            project.basePath,
-                            changes,
-                            diffListener,
-                            commits,
-                            commitListener,
-                            pullRequest.attachments,
-                            attachments
-                        )
-                    val contentFactory = ContentFactory.getInstance()
-                    val content = contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
-                    content.setDisposer { tabs.remove(pullRequest.number) }
-                    val contentManager = toolWindow.contentManager
-                    thisLogger().warn(content.isCloseable.toString())
-                    contentManager.addContent(content)
-                    contentManager.setSelectedContent(content, true, true)
-                    tabs[pullRequest.number] = content
+            try {
+                withContext(Dispatchers.IO) {
+                    val changes = pullRequestService.getChanges(pullRequest)
+                    val commits = pullRequestService.getCommits(pullRequest)
+                    val attachments = pullRequestService.getAttachments(pullRequest)
+                    ApplicationManager.getApplication().invokeLater {
+                        try {
+                            val tabContent =
+                                BacklogPRDetailTab(
+                                    pullRequest,
+                                    project.basePath,
+                                    changes,
+                                    diffListener,
+                                    commits,
+                                    commitListener,
+                                    pullRequest.attachments,
+                                    attachments
+                                )
+                            val contentFactory = ContentFactory.getInstance()
+                            val content =
+                                contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
+                            content.setDisposer { tabs.remove(pullRequest.number) }
+                            val contentManager = toolWindow.contentManager
+                            thisLogger().warn(content.isCloseable.toString())
+                            contentManager.addContent(content)
+                            contentManager.setSelectedContent(content, true, true)
+                            tabs[pullRequest.number] = content
+                        } catch (e: Exception) {
+                            thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                thisLogger().warn("[backlog] Failed to fetch PR detail data: ${e.message}", e)
             }
         }
     }

@@ -107,7 +107,7 @@ class BacklogPRDetailTab(
                 val lsm : ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    val change = changes!!.elementAt(selectedRow)
+                    val change = changes?.elementAt(selectedRow) ?: return@addListSelectionListener
                     diffSelectionListener.onDiffSelected(change)
                 }
             }
@@ -137,7 +137,8 @@ class BacklogPRDetailTab(
                 val lsm : ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    commitSelectionListener.onCommitSelected(commits!![selectedRow])
+                    val commit = commits?.getOrNull(selectedRow) ?: return@addListSelectionListener
+                    commitSelectionListener.onCommitSelected(commit)
                 }
             }
         }

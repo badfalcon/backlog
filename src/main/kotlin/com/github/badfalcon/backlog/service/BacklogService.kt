@@ -73,6 +73,8 @@ class BacklogService(project: Project) {
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{
         thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
         if (isReady) {
+            projectKey = ""
+            repoId = 0
             projectLoop@ for (proj in backlogClient!!.projects) {
                 var repositories: ResponseList<Repository>? = null
                 try {
@@ -88,6 +90,12 @@ class BacklogService(project: Project) {
                     }
                 }
             }
+
+            if (projectKey.isEmpty() || repoId == 0L) {
+                thisLogger().warn("[backlog] No matching Backlog repository found for URL: $targetRemoteUrl")
+                return null
+            }
+
             val pullRequestParams = PullRequestQueryParams()
             val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open }
             pullRequestParams.statusType(pullRequestStatusTypes)

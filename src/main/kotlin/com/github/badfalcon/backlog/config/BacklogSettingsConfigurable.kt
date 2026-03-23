@@ -42,11 +42,12 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
 
     override fun apply() {
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
-        settings.workspaceName = mySettingsComponent?.workspaceNameText!!
-        settings.apiKey = mySettingsComponent?.apiKeyText!!
-        settings.topLevelDomain = mySettingsComponent?.topLevelDomain!!
-        settings.projectName = mySettingsComponent?.projectNameText!!
-        println("https://${settings.workspaceName}.backlog.jp/api/v2/users/myself?apiKey=${settings.apiKey}")
+        val component = mySettingsComponent ?: return
+        settings.workspaceName = component.workspaceNameText
+        settings.apiKey = component.apiKeyText
+        settings.topLevelDomain = component.topLevelDomain
+        settings.projectName = component.projectNameText
+        thisLogger().warn("[backlog] Settings applied for workspace: ${settings.workspaceName}")
     }
 
     override fun reset() {

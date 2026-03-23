@@ -77,13 +77,10 @@ class GitService(private var project: Project) {
         var result: String? = null
         if (isReady) {
             for (remote in repository!!.remotes) {
-                if (remote.firstUrl == null) {
-                    continue
-                }
-                println(remote.firstUrl)
+                val url = remote.firstUrl ?: continue
                 val backlogUrlRegex = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
-                if (backlogUrlRegex.containsMatchIn(remote.firstUrl!!)) {
-                    result = remote.firstUrl
+                if (backlogUrlRegex.containsMatchIn(url)) {
+                    result = url
                     break
                 }
             }
@@ -94,8 +91,8 @@ class GitService(private var project: Project) {
     fun getChanges(baseBranchName: String, targetBranchName: String): MutableCollection<Change>? {
         thisLogger().warn("[backlog] " + "GitService.getChanges")
         if (isReady) {
-            val base = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == baseBranchName }
-            val target = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == targetBranchName }
+            val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
+            val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }
 
             if (base != null && target != null) {
                 // get revisions
@@ -116,8 +113,8 @@ class GitService(private var project: Project) {
     fun getCommits(baseBranchName: String, targetBranchName: String): MutableList<GitCommit>? {
         thisLogger().warn("[backlog] " + "GitService.getCommits")
         if (isReady) {
-            val base = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == baseBranchName }
-            val target = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == targetBranchName }
+            val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
+            val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }
 
             if (base != null && target != null) {
                return GitHistoryUtils.history(
