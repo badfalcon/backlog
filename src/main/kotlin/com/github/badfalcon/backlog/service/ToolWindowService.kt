@@ -129,31 +129,40 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
         cs.launch {
-            withContext(Dispatchers.IO) {
-                val changes = pullRequestService.getChanges(pullRequest)
-                val commits = pullRequestService.getCommits(pullRequest)
-                val attachments = pullRequestService.getAttachments(pullRequest)
-                ApplicationManager.getApplication().invokeLater {
-                    val tabContent =
-                        BacklogPRDetailTab(
-                            pullRequest,
-                            project.basePath,
-                            changes,
-                            diffListener,
-                            commits,
-                            commitListener,
-                            pullRequest.attachments,
-                            attachments
-                        )
-                    val contentFactory = ContentFactory.getInstance()
-                    val content = contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
-                    content.setDisposer { tabs.remove(pullRequest.number) }
-                    val contentManager = toolWindow.contentManager
-                    thisLogger().warn(content.isCloseable.toString())
-                    contentManager.addContent(content)
-                    contentManager.setSelectedContent(content, true, true)
-                    tabs[pullRequest.number] = content
+            try {
+                withContext(Dispatchers.IO) {
+                    val changes = pullRequestService.getChanges(pullRequest)
+                    val commits = pullRequestService.getCommits(pullRequest)
+                    val attachments = pullRequestService.getAttachments(pullRequest)
+                    ApplicationManager.getApplication().invokeLater {
+                        try {
+                            val tabContent =
+                                BacklogPRDetailTab(
+                                    pullRequest,
+                                    project.basePath,
+                                    changes,
+                                    diffListener,
+                                    commits,
+                                    commitListener,
+                                    pullRequest.attachments,
+                                    attachments
+                                )
+                            val contentFactory = ContentFactory.getInstance()
+                            val content =
+                                contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
+                            content.setDisposer { tabs.remove(pullRequest.number) }
+                            val contentManager = toolWindow.contentManager
+                            thisLogger().warn(content.isCloseable.toString())
+                            contentManager.addContent(content)
+                            contentManager.setSelectedContent(content, true, true)
+                            tabs[pullRequest.number] = content
+                        } catch (e: Exception) {
+                            thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                thisLogger().warn("[backlog] Failed to fetch PR detail data: ${e.message}", e)
             }
         }
     }

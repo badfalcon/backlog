@@ -47,7 +47,7 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
         settings.apiKey = component.apiKeyText
         settings.topLevelDomain = component.topLevelDomain
         settings.projectName = component.projectNameText
-        println("https://${settings.workspaceName}.backlog.jp/api/v2/users/myself?apiKey=${settings.apiKey}")
+        thisLogger().warn("[backlog] Settings applied for workspace: ${settings.workspaceName}")
     }
 
     override fun reset() {
