@@ -81,7 +81,8 @@ class BacklogSettingsComponent(private var project: Project) {
     var topLevelDomain: BacklogService.TopLevelDomain
         get() {
             val selectedValue = comboBox.selectedItem as String
-            return BacklogService.TopLevelDomain.values().first { it.value == selectedValue }
+            return BacklogService.TopLevelDomain.values().firstOrNull { it.value == selectedValue }
+                ?: BacklogService.TopLevelDomain.COM
         }
         set(newSelection) {
             comboBox.selectedItem = newSelection.value

@@ -41,7 +41,8 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    pullRequestSelectionListener.onPullRequestSelected(this.pullRequests!![selectedRow])
+                    val pr = this.pullRequests?.getOrNull(selectedRow) ?: return@addListSelectionListener
+                    pullRequestSelectionListener.onPullRequestSelected(pr)
                 }
             }
         }

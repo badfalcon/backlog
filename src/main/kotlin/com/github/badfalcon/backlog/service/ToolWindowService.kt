@@ -104,9 +104,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
         val contentManager = toolWindow.contentManager
-        if (contentManager.findContent(pullRequest.number.toString()) != null) {
+        val content = contentManager.findContent(pullRequest.number.toString())
+        if (content != null) {
             // select tab
-            val content = contentManager.findContent(pullRequest.number.toString())!!
             contentManager.setSelectedContent(content, true, true)
         } else {
             // create tab
