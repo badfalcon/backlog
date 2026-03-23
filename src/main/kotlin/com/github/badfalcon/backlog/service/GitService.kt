@@ -23,49 +23,47 @@ class GitService(private var project: Project) {
     val isReady: Boolean get() = repository != null
 
     init {
-        thisLogger().warn("[backlog] " + "GitService.init")
+        thisLogger().info("[backlog] " + "GitService.init")
         project.messageBus.connect().subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
             checkRepositoryReady()
         })
     }
 
     fun checkRepositoryReady() {
-        thisLogger().warn("[backlog] " + "GitService.checkRepositoryReady")
+        thisLogger().info("[backlog] " + "GitService.checkRepositoryReady")
         val manager = GitUtil.getRepositoryManager(project)
         val basePath: String? = project.basePath
         if (basePath == null) {
-            println("!!!!!basePath == null")
+            thisLogger().info("[backlog] basePath is null")
             repository = null
             return
         }
 
         val rootDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(basePath)
         if (rootDirectory == null) {
-            println("!!!!!rootDirectory == null")
+            thisLogger().info("[backlog] rootDirectory is null")
             repository = null
             return
         }
 
         val repo: GitRepository? = manager.getRepositoryForRoot(rootDirectory)
         if (repo == null) {
-            println("!!!!!repo == null")
+            thisLogger().info("[backlog] repository not found for root")
             repository = null
             return
         }
         repository = repo
-        println("!!!!!repo ready")
-        thisLogger().warn("[BLPL]repository")
         val messageBus = project.messageBus
         val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
         // todo invoke later
         ReadAction.run<Throwable> {
-            thisLogger().warn("[backlog] " + "Git repository ready")
+            thisLogger().info("[backlog] " + "Git repository ready")
             publisher.update("Git repository ready")
         }
     }
 
     fun fetch() {
-        thisLogger().warn("[backlog] " + "GitService.fetch")
+        thisLogger().info("[backlog] " + "GitService.fetch")
         if (isReady) {
             val fetch = GitFetchSupport.fetchSupport(project)
             fetch.fetchAllRemotes(listOf(repository)).showNotificationIfFailed()
@@ -73,7 +71,7 @@ class GitService(private var project: Project) {
     }
 
     fun getRemoteUrl(): String? {
-        thisLogger().warn("[backlog] " + "GitService.getRemoteUrl")
+        thisLogger().info("[backlog] " + "GitService.getRemoteUrl")
         var result: String? = null
         if (isReady) {
             for (remote in repository!!.remotes) {
@@ -89,7 +87,7 @@ class GitService(private var project: Project) {
     }
 
     fun getChanges(baseBranchName: String, targetBranchName: String): MutableCollection<Change>? {
-        thisLogger().warn("[backlog] " + "GitService.getChanges")
+        thisLogger().info("[backlog] " + "GitService.getChanges")
         if (isReady) {
             val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
             val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }
@@ -111,7 +109,7 @@ class GitService(private var project: Project) {
     }
 
     fun getCommits(baseBranchName: String, targetBranchName: String): MutableList<GitCommit>? {
-        thisLogger().warn("[backlog] " + "GitService.getCommits")
+        thisLogger().info("[backlog] " + "GitService.getCommits")
         if (isReady) {
             val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
             val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }

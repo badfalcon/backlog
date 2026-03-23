@@ -45,7 +45,14 @@ class BacklogMarkdownConverter {
                 val attachmentDatum = attachmentData?.find { it.filename == attachment.name } ?: continue
                 val bytes = attachmentDatum.content.readBytes()
                 val base64 = Base64.encodeBase64String(bytes)
-                val imageReplacement = "<img src=\"data:image/jpeg;base64,${base64}\">"
+                val mimeType = when {
+                    attachment.name.endsWith(".png", ignoreCase = true) -> "image/png"
+                    attachment.name.endsWith(".gif", ignoreCase = true) -> "image/gif"
+                    attachment.name.endsWith(".webp", ignoreCase = true) -> "image/webp"
+                    attachment.name.endsWith(".svg", ignoreCase = true) -> "image/svg+xml"
+                    else -> "image/jpeg"
+                }
+                val imageReplacement = "<img src=\"data:${mimeType};base64,${base64}\">"
                 result = imagePattern.replace(result, imageReplacement)
             }
         }

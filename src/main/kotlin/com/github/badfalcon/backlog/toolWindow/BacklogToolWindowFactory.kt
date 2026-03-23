@@ -9,12 +9,11 @@ import com.intellij.openapi.wm.ToolWindowFactory
 
 class BacklogToolWindowFactory : ToolWindowFactory {
     init {
-        thisLogger().warn("[backlog] "+ "BacklogToolWindowFactory.init")
+        thisLogger().info("[backlog] "+ "BacklogToolWindowFactory.init")
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        thisLogger().warn("[backlog] "+ "createToolWindowContent")
-        println("createToolWindowContent")
+        thisLogger().info("[backlog] "+ "createToolWindowContent")
         // initialize tool window service
         val service = project.service<ToolWindowService>()
     }

@@ -25,7 +25,7 @@ class BacklogService(project: Project) {
     }
 
     init {
-        thisLogger().warn("[backlog] "+ "BacklogService.init")
+        thisLogger().info("[backlog] BacklogService.init")
 
         val settings: MyPluginSettingsState = MyPluginSettingsState.getInstance(project)
 
@@ -44,7 +44,7 @@ class BacklogService(project: Project) {
      * Checks if the passed values are valid for backlog
      */
     fun isValidBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure? {
-        thisLogger().warn("[backlog] "+ "BacklogService.isValidBacklogConfigs")
+        thisLogger().info("[backlog] BacklogService.isValidBacklogConfigs")
         if (workspaceName == "" || apiKey == "") {
             return null
         }
@@ -61,7 +61,6 @@ class BacklogService(project: Project) {
         val newClient: BacklogClient = BacklogClientFactory(configure).newClient()
         try {
             if (newClient.myself.name != null) {
-                backlogClient = newClient
                 return configure
             }
         } catch (e: Exception) {
@@ -71,50 +70,44 @@ class BacklogService(project: Project) {
     }
 
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{
-        thisLogger().warn("[backlog] "+ "BacklogService.getPullRequests")
-        if (isReady) {
-            projectKey = ""
-            repoId = 0
-            projectLoop@ for (proj in backlogClient!!.projects) {
-                var repositories: ResponseList<Repository>? = null
-                try {
-                    repositories = backlogClient!!.getGitRepositories(proj.projectKey)
-                } catch (e: Exception) {
-                    continue
-                }
-                for (repo in repositories) {
-                    if (repo.httpUrl == targetRemoteUrl) {
-                        projectKey = proj.projectKey
-                        repoId = repo.id
-                        break@projectLoop
-                    }
+        thisLogger().info("[backlog] BacklogService.getPullRequests")
+        val client = backlogClient ?: return null
+        projectKey = ""
+        repoId = 0
+        projectLoop@ for (proj in client.projects) {
+            val repositories = try {
+                client.getGitRepositories(proj.projectKey)
+            } catch (e: Exception) {
+                continue
+            }
+            for (repo in repositories) {
+                if (repo.httpUrl == targetRemoteUrl) {
+                    projectKey = proj.projectKey
+                    repoId = repo.id
+                    break@projectLoop
                 }
             }
-
-            if (projectKey.isEmpty() || repoId == 0L) {
-                thisLogger().warn("[backlog] No matching Backlog repository found for URL: $targetRemoteUrl")
-                return null
-            }
-
-            val pullRequestParams = PullRequestQueryParams()
-            val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open }
-            pullRequestParams.statusType(pullRequestStatusTypes)
-
-            val pullRequests = backlogClient!!.getPullRequests(projectKey, repoId, pullRequestParams)
-            return pullRequests
         }
-        return null
+
+        if (projectKey.isEmpty() || repoId == 0L) {
+            thisLogger().warn("[backlog] No matching Backlog repository found for URL: $targetRemoteUrl")
+            return null
+        }
+
+        val pullRequestParams = PullRequestQueryParams()
+        val pullRequestStatusTypes: List<PullRequest.StatusType> = List(1) { PullRequest.StatusType.Open }
+        pullRequestParams.statusType(pullRequestStatusTypes)
+
+        return client.getPullRequests(projectKey, repoId, pullRequestParams)
     }
 
     fun getImageAttachments(pullRequestId: Long, attachments: MutableList<Attachment>): MutableList<AttachmentData> {
-        thisLogger().warn("[backlog] " + "GitService.getAttachmentData")
+        thisLogger().info("[backlog] BacklogService.getImageAttachments")
         val list = mutableListOf<AttachmentData>()
-        if (isReady) {
-            for (attachment in attachments) {
-                val attachmentId = attachment.id
-                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId);
-                list.add(data)
-            }
+        val client = backlogClient ?: return list
+        for (attachment in attachments) {
+            val data = client.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachment.id)
+            list.add(data)
         }
         return list
     }

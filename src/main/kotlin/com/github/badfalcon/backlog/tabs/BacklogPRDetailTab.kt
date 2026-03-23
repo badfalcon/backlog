@@ -1,6 +1,7 @@
 package com.github.badfalcon.backlog.tabs
 
 import com.github.badfalcon.backlog.util.BacklogMarkdownConverter
+import com.github.badfalcon.backlog.util.autoResizeTableColumns
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.components.JBPanel
@@ -15,11 +16,9 @@ import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
 import git4idea.GitCommit
 import java.awt.BorderLayout
-import java.awt.Component
 import javax.swing.JTable
 import javax.swing.table.DefaultTableModel
 import javax.swing.ListSelectionModel
-import javax.swing.table.TableCellRenderer
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -37,7 +36,6 @@ class BacklogPRDetailTab(
     private val basePath = Path(basePathStr?:"")
 
     init {
-        println("BacklogPRDetailTab init")
         this.layout = BorderLayout()
 
         // create overview
@@ -62,13 +60,11 @@ class BacklogPRDetailTab(
 
         // create changes
         val changesTable = createChangesTable(changes, diffSelectionListener)
-        val changesPanel = JBScrollPane(changesTable)
-        val chScrollPane = JBScrollPane(changesPanel)
+        val chScrollPane = JBScrollPane(changesTable)
 
         // create commits
         val commitsTable = createCommitsTable(commits, commitSelectionListener)
-        val commitsPanel = JBScrollPane(commitsTable)
-        val cmScrollPane = JBScrollPane(commitsPanel)
+        val cmScrollPane = JBScrollPane(commitsTable)
 
         // create tabbed pane
         val tabbedPane = JBTabbedPane()
@@ -157,23 +153,6 @@ class BacklogPRDetailTab(
 
         val relativePath = fullPath.relativeTo(basePath)
         return relativePath.pathString
-    }
-
-    private fun autoResizeTableColumns(table: JBTable) {
-        val header = table.tableHeader
-        val columnModel = table.columnModel
-        for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
-                .getTableCellRendererComponent(table, header.getColumnModel().getColumn(column).getHeaderValue(), false, false, -1, column)
-                .preferredSize.width
-            for (row in 0 until table.rowCount) {
-                val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)
-                val cellComponent: Component = table.prepareRenderer(cellRenderer, row, column)
-                val cellWidth: Int = cellComponent.preferredSize.width
-                maxWidth = maxOf(maxWidth, cellWidth)
-            }
-            columnModel.getColumn(column).preferredWidth = maxWidth + 20 // マージンを追加
-        }
     }
 
 }

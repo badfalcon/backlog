@@ -14,15 +14,15 @@ import git4idea.GitCommit
 class PullRequestService(private var project: Project) {
     var backlogService: BacklogService
     var gitService: GitService
-    val isReady: Boolean get() = backlogService?.isReady == true && gitService?.isReady == true
+    val isReady: Boolean get() = backlogService.isReady && gitService.isReady
     init {
-        thisLogger().warn("[backlog] "+"PullRequestService.init")
+        thisLogger().info("[backlog] "+"PullRequestService.init")
         backlogService = project.service<BacklogService>()
         gitService = project.service<GitService>()
     }
 
     fun getPullRequests(): ResponseList<PullRequest>? {
-        thisLogger().warn("[backlog] "+"PullRequestService.getPullRequests")
+        thisLogger().info("[backlog] "+"PullRequestService.getPullRequests")
         var result : ResponseList<PullRequest>? = null
         if (backlogService.isReady && gitService.isReady) {
             gitService.fetch()
@@ -37,7 +37,7 @@ class PullRequestService(private var project: Project) {
     }
 
     fun getChanges(pullRequest: PullRequest) : MutableCollection<Change>?{
-        thisLogger().warn("[backlog] "+"PullRequestService.getChanges")
+        thisLogger().info("[backlog] "+"PullRequestService.getChanges")
         if(gitService.isReady){
             val changes = gitService.getChanges(pullRequest.base, pullRequest.branch)
             return changes
@@ -46,7 +46,7 @@ class PullRequestService(private var project: Project) {
     }
 
     fun getCommits(pullRequest: PullRequest) : MutableList<GitCommit>? {
-        thisLogger().warn("[backlog] "+"PullRequestService.getCommits")
+        thisLogger().info("[backlog] "+"PullRequestService.getCommits")
         if(gitService.isReady){
             val commits = gitService.getCommits(pullRequest.base, pullRequest.branch)
             return commits
@@ -55,7 +55,7 @@ class PullRequestService(private var project: Project) {
     }
 
     fun getAttachments(pullRequest: PullRequest) : MutableList<AttachmentData> {
-        thisLogger().warn("[backlog] "+"PullRequestService.getAttachments")
+        thisLogger().info("[backlog] "+"PullRequestService.getAttachments")
         val attachmentData = backlogService.getImageAttachments(pullRequest.number, pullRequest.attachments)
         return attachmentData
     }

@@ -38,7 +38,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     var tabs: MutableMap<Long, Content> = mutableMapOf()
 
     init {
-        thisLogger().warn("[backlog] " + "ToolWindowService.init")
+        thisLogger().info("[backlog] " + "ToolWindowService.init")
         pullRequestService = project.service<PullRequestService>()
 
 //        getPullRequests()
@@ -47,7 +47,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             UPDATE_TOPIC,
             object : ToolWindowNotifier {
                 override fun update(message: String) {
-                    println("Received message: $message")
+                    thisLogger().info("[backlog] Received message: $message")
                     getPullRequests()
                 }
             })
@@ -55,11 +55,11 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         // create home tab
         val pullRequestListener = object : PullRequestSelectionListener {
             override fun onPullRequestSelected(pullRequest: PullRequest) {
-                println("Selected Pull Request: ${pullRequest.summary}")
+                thisLogger().info("[backlog] Selected Pull Request: ${pullRequest.summary}")
                 tryGetPullRequestTabContent(pullRequest)
             }
         }
-        homeTab = BacklogHomeTab(pullRequestListener)
+        homeTab = BacklogHomeTab(project, pullRequestListener)
 
         // set to tool window
         val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
@@ -78,7 +78,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
 
     fun getPullRequests() {
-        thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
+        thisLogger().info("[backlog] " + "ToolWindowService.getPullRequests")
         cs.launch {
             try {
                 val pullRequests = withContext(Dispatchers.IO) {
@@ -102,7 +102,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
 
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
+        thisLogger().info("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
         val contentManager = toolWindow.contentManager
         val content = contentManager.findContent(pullRequest.number.toString())
         if (content != null) {
@@ -121,13 +121,13 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
     private val commitListener = object : CommitSelectionListener {
         override fun onCommitSelected(commit: GitCommit) {
-            thisLogger().warn("Commit selected")
+            thisLogger().info("[backlog] Commit selected")
             showCommit(commit)
         }
     }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
+        thisLogger().info("[backlog] " + "ToolWindowService.createPullRequestTabContent")
         cs.launch {
             try {
                 withContext(Dispatchers.IO) {
@@ -152,7 +152,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                                 contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
                             content.setDisposer { tabs.remove(pullRequest.number) }
                             val contentManager = toolWindow.contentManager
-                            thisLogger().warn(content.isCloseable.toString())
+                            thisLogger().info("[backlog] Tab isCloseable: ${content.isCloseable}")
                             contentManager.addContent(content)
                             contentManager.setSelectedContent(content, true, true)
                             tabs[pullRequest.number] = content

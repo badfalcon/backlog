@@ -24,7 +24,7 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
 
     @Nullable
     override fun createComponent(): JComponent? {
-        thisLogger().warn("[backlog] "+ "BacklogSettingsConfigurable.createComponent")
+        thisLogger().info("[backlog] "+ "BacklogSettingsConfigurable.createComponent")
         if(mySettingsComponent == null){
             mySettingsComponent = BacklogSettingsComponent(project)
         }
@@ -47,7 +47,7 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
         settings.apiKey = component.apiKeyText
         settings.topLevelDomain = component.topLevelDomain
         settings.projectName = component.projectNameText
-        thisLogger().warn("[backlog] Settings applied for workspace: ${settings.workspaceName}")
+        thisLogger().info("[backlog] Settings applied for workspace: ${settings.workspaceName}")
     }
 
     override fun reset() {
