@@ -61,7 +61,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 publisher.update("reload")
             }
         }
-        this.update(null)
+        this.update(null as ResponseList<PullRequest>?)
 
         this.layout = BorderLayout()
         reload(false)
