@@ -11,7 +11,7 @@ class BacklogMarkdownConverter {
 
         // replace headers
         for (i in 9 downTo 1) {
-            val headerPattern = Regex("""\*{${i}}\s?(.*)(\r)?\n""")
+            val headerPattern = Regex("""\*{${i}}\s?(.*)\r?\n""")
             val headerReplacement = "<h${i}>$1</h${i}>\n"
             result = headerPattern.replace(result, headerReplacement)
         }
@@ -20,7 +20,7 @@ class BacklogMarkdownConverter {
         for(i in 1 .. 9)
         {
             // replace list groups
-            val listGroupPattern = Regex("""(?:-{${i},}\s.+(?:\r)?\n)+""")
+            val listGroupPattern = Regex("""(-{${i},}\s.+\r?\n)+""")
             val listGroupReplacement = "<ul>\n$0</ul>\n"
             result = listGroupPattern.replace(result, listGroupReplacement)
 
@@ -33,6 +33,7 @@ class BacklogMarkdownConverter {
         // show images
         if (attachments != null) {
             for (attachment in attachments) {
+                @Suppress("UnstableApiUsage")
                 if (!attachment.isImage){
                     continue
                 }
@@ -51,8 +52,7 @@ class BacklogMarkdownConverter {
         }
 
         // replace new lines
-        val newLinePattern = Regex("""\n""", RegexOption.MULTILINE)
-        result = newLinePattern.replace(result, "<br>")
+        result = result.replace("\n", "<br>")
         return "<html><body>$result</body></html>"
     }
 }

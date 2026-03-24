@@ -11,7 +11,7 @@ import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 
 @Service(Service.Level.PROJECT)
-class PullRequestService(private var project: Project) {
+class PullRequestService(project: Project) {
     var backlogService: BacklogService
     var gitService: GitService
     val isReady: Boolean get() = backlogService?.isReady == true && gitService?.isReady == true

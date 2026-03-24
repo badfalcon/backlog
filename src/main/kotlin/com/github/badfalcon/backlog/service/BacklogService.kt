@@ -112,7 +112,7 @@ class BacklogService(project: Project) {
         if (isReady) {
             for (attachment in attachments) {
                 val attachmentId = attachment.id
-                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId);
+                val data = backlogClient!!.downloadPullRequestAttachment(projectKey, repoId, pullRequestId, attachmentId)
                 list.add(data)
             }
         }

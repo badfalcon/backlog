@@ -52,7 +52,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             addActionListener {
                 reloadButton.isEnabled = false
                 pullRequestTable.isEnabled = false
-                statusLabel.text = "reloading"
+                statusLabel.text = "Reloading"
 
                 // update window
                 val project = ProjectManager.getInstance().openProjects[0]
@@ -61,8 +61,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 publisher.update("reload")
             }
         }
-        val pullRequests: ResponseList<PullRequest>? = null
-        this.update(pullRequests)
+        this.update(null)
 
         this.layout = BorderLayout()
         reload(false)
@@ -83,11 +82,11 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         val mainPanel = panel {
             row {
                 cell(JBLabel("Git"))
-                cell(JBLabel(if(gitReady) "ready" else "not ready"))
+                cell(JBLabel(if(gitReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(JBLabel("Backlog"))
-                cell(JBLabel(if(backlogReady) "ready" else "not ready"))
+                cell(JBLabel(if(backlogReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
@@ -141,10 +140,10 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         val header = table.tableHeader
         val columnModel = table.columnModel
         for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
+            var maxWidth = header.defaultRenderer
                 .getTableCellRendererComponent(
                     table,
-                    header.getColumnModel().getColumn(column).getHeaderValue(),
+                    header.columnModel.getColumn(column).headerValue,
                     false,
                     false,
                     -1,
