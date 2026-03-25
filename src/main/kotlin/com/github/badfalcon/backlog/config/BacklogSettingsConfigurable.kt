@@ -1,6 +1,9 @@
 package com.github.badfalcon.backlog.config
 
 
+import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
+import com.github.badfalcon.backlog.service.BacklogService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -48,6 +51,15 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
         settings.topLevelDomain = component.topLevelDomain
         settings.projectName = component.projectNameText
         thisLogger().warn("[backlog] Settings applied for workspace: ${settings.workspaceName}")
+
+        val backlogService = project.service<BacklogService>()
+        val configure = backlogService.isValidBacklogConfigs(
+            settings.workspaceName, settings.apiKey, settings.topLevelDomain
+        )
+        if (configure != null) {
+            val publisher = project.messageBus.syncPublisher(UPDATE_TOPIC)
+            publisher.update("Backlog settings updated")
+        }
     }
 
     override fun reset() {
