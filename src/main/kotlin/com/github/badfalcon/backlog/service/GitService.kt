@@ -22,6 +22,9 @@ import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 class GitService(private val project: Project, cs: CoroutineScope) {
+    companion object {
+        val BACKLOG_URL_REGEX = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
+    }
     var repository: GitRepository? = null
     val isReady: Boolean get() = repository != null
 
@@ -84,8 +87,7 @@ class GitService(private val project: Project, cs: CoroutineScope) {
         if (isReady) {
             for (remote in repository!!.remotes) {
                 val url = remote.firstUrl ?: continue
-                val backlogUrlRegex = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
-                if (backlogUrlRegex.containsMatchIn(url)) {
+                if (BACKLOG_URL_REGEX.containsMatchIn(url)) {
                     result = url
                     break
                 }
