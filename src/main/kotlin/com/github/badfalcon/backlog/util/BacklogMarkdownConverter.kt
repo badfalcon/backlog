@@ -33,7 +33,6 @@ class BacklogMarkdownConverter {
         // show images
         if (attachments != null) {
             for (attachment in attachments) {
-                @Suppress("UnstableApiUsage")
                 if (!attachment.isImage){
                     continue
                 }

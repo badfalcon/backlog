@@ -64,7 +64,7 @@ class BacklogService(project: Project) {
                 backlogClient = newClient
                 return configure
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return null
         }
         return null
@@ -79,7 +79,7 @@ class BacklogService(project: Project) {
                 val repositories: ResponseList<Repository>?
                 try {
                     repositories = backlogClient!!.getGitRepositories(proj.projectKey)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     continue
                 }
                 for (repo in repositories) {
