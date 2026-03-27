@@ -43,31 +43,31 @@ class BacklogService(project: Project) {
     /**
      * Checks if the passed values are valid for backlog
      */
-    fun isValidBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure? {
-        thisLogger().warn("[backlog] "+ "BacklogService.isValidBacklogConfigs")
-        if (workspaceName == "" || apiKey == "") {
-            return null
-        }
+    /**
+     * Validates the Backlog configuration and returns the configure object.
+     * @throws BacklogApiException if the API call fails
+     * @throws IllegalArgumentException if workspace or API key is empty
+     */
+    fun validateBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure {
+        thisLogger().warn("[backlog] " + "BacklogService.validateBacklogConfigs")
+        require(workspaceName.isNotEmpty() && apiKey.isNotEmpty()) { "Workspace name and API key must not be empty" }
 
         val configure: BacklogConfigure = when (topLevelDomain) {
-            TopLevelDomain.JP -> {
-                BacklogJpConfigure(workspaceName).apiKey(apiKey)
-            }
-
-            TopLevelDomain.COM -> {
-                BacklogComConfigure(workspaceName).apiKey(apiKey)
-            }
+            TopLevelDomain.JP -> BacklogJpConfigure(workspaceName).apiKey(apiKey)
+            TopLevelDomain.COM -> BacklogComConfigure(workspaceName).apiKey(apiKey)
         }
         val newClient: BacklogClient = BacklogClientFactory(configure).newClient()
-        try {
-            if (newClient.myself.name != null) {
-                backlogClient = newClient
-                return configure
-            }
+        newClient.myself // throws if invalid
+        backlogClient = newClient
+        return configure
+    }
+
+    fun isValidBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure? {
+        return try {
+            validateBacklogConfigs(workspaceName, apiKey, topLevelDomain)
         } catch (_: Exception) {
-            return null
+            null
         }
-        return null
     }
 
     fun getPullRequests(targetRemoteUrl: String) : ResponseList<PullRequest>?{

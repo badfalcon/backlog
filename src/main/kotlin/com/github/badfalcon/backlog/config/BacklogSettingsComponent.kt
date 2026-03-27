@@ -1,7 +1,9 @@
 package com.github.badfalcon.backlog.config
 
+import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -12,6 +14,7 @@ import com.intellij.ui.dsl.builder.*
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.Timer
 
 
 /**
@@ -26,6 +29,7 @@ class BacklogSettingsComponent(private var project: Project) {
 
     private val myInputCheckButton = JButton("Run")
     private val myInputStatusCheckLabel = JBLabel()
+    private var statusDismissTimer: Timer? = null
 
     init {
         setupButtonAction()
@@ -90,32 +94,59 @@ class BacklogSettingsComponent(private var project: Project) {
 
     private fun setupButtonAction() {
         myInputCheckButton.addActionListener {
-            if(workspaceNameText != "" && apiKeyText != ""){
-                // check if the values are valid
+            if (workspaceNameText.isNotEmpty() && apiKeyText.isNotEmpty()) {
+                myInputCheckButton.isEnabled = false
+                myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.checking")
+                myInputStatusCheckLabel.foreground = JBColor.foreground()
+                myInputStatusCheckLabel.isVisible = true
+
                 val backlogService = project.getService(BacklogService::class.java)
-                val config = backlogService.isValidBacklogConfigs(workspaceNameText, apiKeyText, topLevelDomain)
-                val isValid = config != null
+                val workspace = workspaceNameText
+                val apiKey = apiKeyText
+                val tld = topLevelDomain
 
-                updateStatus(isValid)
-                if ( isValid){
-
-                    val messageBus = project.messageBus
-                    val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
-                    publisher.update("button Action")
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    try {
+                        backlogService.validateBacklogConfigs(workspace, apiKey, tld)
+                        ApplicationManager.getApplication().invokeLater {
+                            updateStatus(true)
+                            val messageBus = project.messageBus
+                            val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
+                            publisher.update("button Action")
+                        }
+                    } catch (e: Exception) {
+                        ApplicationManager.getApplication().invokeLater {
+                            updateStatus(false, e.message)
+                        }
+                    }
                 }
             }
         }
     }
 
-    private fun updateStatus(success: Boolean) {
+    private fun updateStatus(success: Boolean, errorMessage: String? = null) {
+        myInputCheckButton.isEnabled = true
         if (success) {
-            myInputStatusCheckLabel.text = "Success"
+            myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.success")
             myInputStatusCheckLabel.foreground = JBColor.GREEN
         } else {
-            myInputStatusCheckLabel.text = "Failure"
+            val detail = errorMessage ?: "Unknown error"
+            myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.failure", detail)
             myInputStatusCheckLabel.foreground = JBColor.RED
         }
         myInputStatusCheckLabel.isVisible = true
-        // todo set the status text disappear by time
+
+        statusDismissTimer?.stop()
+        statusDismissTimer = Timer(5000) {
+            myInputStatusCheckLabel.isVisible = false
+            myInputStatusCheckLabel.text = ""
+        }.apply {
+            isRepeats = false
+            start()
+        }
+    }
+
+    fun dispose() {
+        statusDismissTimer?.stop()
     }
 }

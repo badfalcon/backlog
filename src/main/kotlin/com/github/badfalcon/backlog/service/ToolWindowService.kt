@@ -10,6 +10,8 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,14 +19,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
 import com.nulabinc.backlog4j.PullRequest
 import git4idea.GitCommit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.awt.BorderLayout
+import javax.swing.JButton
+import javax.swing.JPanel
 
 
 @Service(Service.Level.PROJECT)
@@ -97,6 +106,9 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 }
             } catch (e: Exception) {
                 thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
+                ApplicationManager.getApplication().invokeLater {
+                    homeTab.showError(e.message ?: "Unknown error")
+                }
             }
         }
     }
@@ -128,41 +140,75 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
+
+        // Show loading tab immediately
+        val loadingPanel = JBLoadingPanel(BorderLayout(), Disposable {})
+        loadingPanel.startLoading()
+        val contentFactory = ContentFactory.getInstance()
+        val content = contentFactory.createContent(loadingPanel, pullRequest.number.toString(), false)
+        content.setDisposer { tabs.remove(pullRequest.number) }
+        val contentManager = toolWindow.contentManager
+        contentManager.addContent(content)
+        contentManager.setSelectedContent(content, true, true)
+        tabs[pullRequest.number] = content
+
         cs.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    val changes = pullRequestService.getChanges(pullRequest)
-                    val commits = pullRequestService.getCommits(pullRequest)
-                    val attachments = pullRequestService.getAttachments(pullRequest)
-                    ApplicationManager.getApplication().invokeLater {
-                        try {
-                            val tabContent =
-                                BacklogPRDetailTab(
-                                    pullRequest,
-                                    project.basePath,
-                                    changes,
-                                    diffListener,
-                                    commits,
-                                    commitListener,
-                                    pullRequest.attachments,
-                                    attachments
-                                )
-                            val contentFactory = ContentFactory.getInstance()
-                            val content =
-                                contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
-                            content.setDisposer { tabs.remove(pullRequest.number) }
-                            val contentManager = toolWindow.contentManager
-                            thisLogger().warn(content.isCloseable.toString())
-                            contentManager.addContent(content)
-                            contentManager.setSelectedContent(content, true, true)
-                            tabs[pullRequest.number] = content
-                        } catch (e: Exception) {
-                            thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
-                        }
+                val changes = withContext(Dispatchers.IO) { pullRequestService.getChanges(pullRequest) }
+                val commits = withContext(Dispatchers.IO) { pullRequestService.getCommits(pullRequest) }
+                val attachments = withContext(Dispatchers.IO) { pullRequestService.getAttachments(pullRequest) }
+                ApplicationManager.getApplication().invokeLater {
+                    try {
+                        val tabContent = BacklogPRDetailTab(
+                            pullRequest,
+                            project.basePath,
+                            changes,
+                            diffListener,
+                            commits,
+                            commitListener,
+                            pullRequest.attachments,
+                            attachments
+                        )
+                        loadingPanel.stopLoading()
+                        loadingPanel.add(tabContent, BorderLayout.CENTER)
+                        loadingPanel.revalidate()
+                        loadingPanel.repaint()
+                    } catch (e: Exception) {
+                        thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
+                        loadingPanel.stopLoading()
+                        loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                            contentManager.removeContent(content, true)
+                            tabs.remove(pullRequest.number)
+                            createPullRequestTabContent(pullRequest)
+                        }, BorderLayout.CENTER)
+                        loadingPanel.revalidate()
                     }
                 }
             } catch (e: Exception) {
                 thisLogger().warn("[backlog] Failed to fetch PR detail data: ${e.message}", e)
+                ApplicationManager.getApplication().invokeLater {
+                    loadingPanel.stopLoading()
+                    loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                        contentManager.removeContent(content, true)
+                        tabs.remove(pullRequest.number)
+                        createPullRequestTabContent(pullRequest)
+                    }, BorderLayout.CENTER)
+                    loadingPanel.revalidate()
+                }
+            }
+        }
+    }
+
+    private fun createErrorPanel(message: String, retryAction: () -> Unit): JPanel {
+        val retryButton = JButton(BacklogBundle.message("prDetail.error.retry"))
+        retryButton.addActionListener { retryAction() }
+        return panel {
+            row {
+                icon(AllIcons.General.Error)
+                label(message)
+            }
+            row {
+                cell(retryButton)
             }
         }
     }

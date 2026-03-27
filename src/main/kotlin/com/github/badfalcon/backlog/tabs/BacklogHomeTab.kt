@@ -1,14 +1,20 @@
 package com.github.badfalcon.backlog.tabs
 
+import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
 import com.github.badfalcon.backlog.service.GitService
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
@@ -18,6 +24,8 @@ import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JButton
 import javax.swing.ListSelectionModel
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 import javax.swing.table.DefaultTableModel
 import javax.swing.table.TableCellRenderer
 
@@ -25,13 +33,18 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
 
     val reloadButton: JButton = JButton("reload")
     val statusLabel: JBLabel = JBLabel()
+    val searchField: SearchTextField = SearchTextField()
+    private val tableLoadingPanel: JBLoadingPanel = JBLoadingPanel(BorderLayout(), Disposable {})
 
     var pullRequestTable: JBTable = JBTable(createTableModel(null))
 
     var pullRequests: ResponseList<PullRequest>? = null
+    private var filteredPullRequests: List<PullRequest>? = null
 
     init {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
+        layout = BorderLayout()
+
         // create pull request selection table
         pullRequestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         // set selection listener
@@ -40,7 +53,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    val pr = this.pullRequests?.getOrNull(selectedRow) ?: return@addListSelectionListener
+                    val pr = this.filteredPullRequests?.getOrNull(selectedRow) ?: return@addListSelectionListener
                     pullRequestSelectionListener.onPullRequestSelected(pr)
                 }
             }
@@ -51,7 +64,9 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             addActionListener {
                 reloadButton.isEnabled = false
                 pullRequestTable.isEnabled = false
-                statusLabel.text = "Reloading"
+                statusLabel.text = BacklogBundle.message("homeTab.status.reloading")
+                statusLabel.icon = AnimatedIcon.Default()
+                tableLoadingPanel.startLoading()
 
                 // update window
                 val project = ProjectManager.getInstance().openProjects[0]
@@ -60,69 +75,106 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 publisher.update("reload")
             }
         }
-        this.update(null as ResponseList<PullRequest>?)
 
-        this.layout = BorderLayout()
-        reload(false)
+        // setup search field filter
+        searchField.textEditor.emptyText.text = BacklogBundle.message("homeTab.search.placeholder")
+        searchField.addDocumentListener(object : DocumentListener {
+            override fun insertUpdate(e: DocumentEvent?) = filterPullRequests()
+            override fun removeUpdate(e: DocumentEvent?) = filterPullRequests()
+            override fun changedUpdate(e: DocumentEvent?) = filterPullRequests()
+        })
+
+        // setup table loading panel (CENTER)
+        tableLoadingPanel.add(JBScrollPane(pullRequestTable), BorderLayout.CENTER)
+        add(tableLoadingPanel, BorderLayout.CENTER)
+
+        // build toolbar (NORTH)
+        rebuildToolbar()
+
+        // start loading on initial fetch
+        tableLoadingPanel.startLoading()
     }
 
     fun getContent() = this
 
-    fun reload(updateFinish: Boolean = false) {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.reload")
-        removeAll()
-        val scrollableTable = JBScrollPane(pullRequestTable)
+    private fun rebuildToolbar() {
         // get project
         val project = ProjectManager.getInstance().openProjects[0]
-        // backlogがisReadyならばreadyと表示
-        val backlogReady : Boolean = project.getService(BacklogService::class.java).isReady
-        // gitがisReadyならばreadyと表示
-        val gitReady  : Boolean = project.getService(GitService::class.java).isReady
-        val mainPanel = panel {
+        val backlogReady: Boolean = project.getService(BacklogService::class.java).isReady
+        val gitReady: Boolean = project.getService(GitService::class.java).isReady
+
+        val toolbarPanel = panel {
             row {
                 cell(JBLabel("Git"))
-                cell(JBLabel(if(gitReady) "Ready" else "Not ready"))
+                cell(JBLabel(if (gitReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(JBLabel("Backlog"))
-                cell(JBLabel(if(backlogReady) "Ready" else "Not ready"))
+                cell(JBLabel(if (backlogReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
                 cell(statusLabel)
             }
-
             row {
-                cell(scrollableTable).align(Align.FILL)
-            }.resizableRow()
+                cell(searchField).align(AlignX.FILL)
+            }
         }
-        add(mainPanel, BorderLayout.CENTER)
 
-        if (updateFinish) {
-            statusLabel.text = ""
-            reloadButton.isEnabled = true
-            pullRequestTable.isEnabled = true
-
-        }
-        // update window
-        revalidate()
-        repaint()
+        // replace NORTH component
+        (layout as BorderLayout).getLayoutComponent(BorderLayout.NORTH)?.let { remove(it) }
+        add(toolbarPanel, BorderLayout.NORTH)
     }
 
     fun update(pullRequests: ResponseList<PullRequest>?) {
         thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
         this.pullRequests = pullRequests
-        pullRequestTable.model = createTableModel(this.pullRequests)
-
-        // auto resize columns
+        this.filteredPullRequests = pullRequests?.toList()
+        searchField.text = ""
+        pullRequestTable.model = createTableModel(this.filteredPullRequests)
         autoResizeTableColumns(pullRequestTable)
-
         pullRequestTable.isEnabled = true
 
-        reload(true)
+        // update toolbar (ready status may have changed)
+        rebuildToolbar()
+
+        // stop loading
+        statusLabel.text = ""
+        statusLabel.icon = null
+        statusLabel.foreground = JBColor.foreground()
+        reloadButton.isEnabled = true
+        tableLoadingPanel.stopLoading()
+
+        revalidate()
+        repaint()
     }
 
-    private fun createTableModel(pullRequests: ResponseList<PullRequest>?): DefaultTableModel {
+    fun showError(message: String) {
+        statusLabel.text = BacklogBundle.message("homeTab.status.error", message)
+        statusLabel.foreground = JBColor.RED
+        statusLabel.icon = null
+        reloadButton.isEnabled = true
+        pullRequestTable.isEnabled = true
+        tableLoadingPanel.stopLoading()
+    }
+
+    private fun filterPullRequests() {
+        val query = searchField.text.lowercase()
+        filteredPullRequests = if (query.isBlank()) {
+            pullRequests?.toList()
+        } else {
+            pullRequests?.filter {
+                it.summary.lowercase().contains(query) ||
+                        it.createdUser.name.lowercase().contains(query) ||
+                        it.branch.lowercase().contains(query) ||
+                        it.number.toString().contains(query)
+            }
+        }
+        pullRequestTable.model = createTableModel(filteredPullRequests)
+        autoResizeTableColumns(pullRequestTable)
+    }
+
+    private fun createTableModel(pullRequests: List<PullRequest>?): DefaultTableModel {
         val columnNames = arrayOf("#", "title", "author", "branch")
         val data = pullRequests?.map {
             arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())

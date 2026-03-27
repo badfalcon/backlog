@@ -70,6 +70,7 @@ class BacklogSettingsConfigurable(private var project: Project) : Configurable {
     }
 
     override fun disposeUIResources() {
+        mySettingsComponent?.dispose()
         mySettingsComponent = null
     }
 }
