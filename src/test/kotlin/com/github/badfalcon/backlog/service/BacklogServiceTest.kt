@@ -82,14 +82,13 @@ class BacklogServiceTest : BasePlatformTestCase() {
         val mockPullRequests = mockk<ResponseList<PullRequest>>(relaxed = true)
 
         val mockClient = mockk<BacklogClient>()
-        every { mockClient.projects } returns listOf(mockProject) as ResponseList<BacklogProject>
+        val mockProjectList = mockk<ResponseList<BacklogProject>>(relaxed = true)
+        every { mockProjectList.iterator() } returns mutableListOf(mockProject).iterator()
+        every { mockClient.projects } returns mockProjectList
 
-        // Use any() matcher for more flexible matching
-        every { mockClient.getGitRepositories("PROJ") } returns mockk {
-            val repoList = listOf(mockRepo)
-            every { iterator() } returns repoList.iterator()
-            every { size } returns 1
-        }
+        val mockRepoList = mockk<ResponseList<Repository>>(relaxed = true)
+        every { mockRepoList.iterator() } returns mutableListOf(mockRepo).iterator()
+        every { mockClient.getGitRepositories("PROJ") } returns mockRepoList
         every { mockClient.getPullRequests(eq("PROJ"), eq(42L), any()) } returns mockPullRequests
 
         backlogService.backlogClient = mockClient
@@ -108,12 +107,13 @@ class BacklogServiceTest : BasePlatformTestCase() {
         every { mockProject.projectKey } returns "OTHER"
 
         val mockClient = mockk<BacklogClient>()
-        every { mockClient.projects } returns listOf(mockProject) as ResponseList<BacklogProject>
-        every { mockClient.getGitRepositories("OTHER") } returns mockk {
-            val repoList = listOf(mockRepo)
-            every { iterator() } returns repoList.iterator()
-            every { size } returns 1
-        }
+        val mockProjectList = mockk<ResponseList<BacklogProject>>(relaxed = true)
+        every { mockProjectList.iterator() } returns mutableListOf(mockProject).iterator()
+        every { mockClient.projects } returns mockProjectList
+
+        val mockRepoList = mockk<ResponseList<Repository>>(relaxed = true)
+        every { mockRepoList.iterator() } returns mutableListOf(mockRepo).iterator()
+        every { mockClient.getGitRepositories("OTHER") } returns mockRepoList
 
         backlogService.backlogClient = mockClient
         val result = backlogService.getPullRequests("https://workspace.backlog.com/git/PROJ/repo.git")

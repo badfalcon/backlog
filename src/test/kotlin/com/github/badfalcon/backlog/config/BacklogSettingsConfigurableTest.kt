@@ -32,21 +32,29 @@ class BacklogSettingsConfigurableTest : BasePlatformTestCase() {
         assertFalse(configurable.isModified)
     }
 
-    fun testIsModifiedTrueAfterChange() {
+    fun testIsModifiedTrueAfterSettingsChange() {
         configurable.createComponent()
         configurable.reset()
+        assertFalse(configurable.isModified)
 
-        // Access the component's preferred focused component (workspace text field) and modify it
-        val focusedComponent = configurable.preferredFocusedComponent
-        assertNotNull(focusedComponent)
-
-        // Modify settings via the configurable's internal component
-        // Since we can't directly access the component, we rely on the fact that
-        // the component fields are different from settings defaults
+        // Change settings state so it diverges from the component's current values
         val settings = MyPluginSettingsState.getInstance(project)
         settings.workspaceName = "changed"
 
-        // After changing settings, reset should sync component, then isModified should be false
+        // Component still holds old value (""), settings now hold "changed" → isModified should be true
+        assertTrue(configurable.isModified)
+    }
+
+    fun testResetSyncsComponentToSettings() {
+        configurable.createComponent()
+
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "changed"
+
+        // Before reset, component and settings differ
+        assertTrue(configurable.isModified)
+
+        // After reset, component should sync to settings
         configurable.reset()
         assertFalse(configurable.isModified)
     }

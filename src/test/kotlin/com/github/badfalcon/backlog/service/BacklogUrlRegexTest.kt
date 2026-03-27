@@ -33,4 +33,9 @@ class BacklogUrlRegexTest : BasePlatformTestCase() {
     fun testBacklogOrgUrl() {
         assertFalse(regex.containsMatchIn("https://workspace.backlog.org/git/PROJ/repo.git"))
     }
+
+    fun testEmbeddedBacklogUrlPartialMatch() {
+        // containsMatchIn will match embedded URLs — this documents the current behavior
+        assertTrue(regex.containsMatchIn("https://evil.com?redirect=https://ws.backlog.com/git/P/r.git"))
+    }
 }
