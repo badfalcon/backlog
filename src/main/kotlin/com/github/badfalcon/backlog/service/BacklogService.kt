@@ -41,11 +41,7 @@ class BacklogService(project: Project) {
     }
 
     /**
-     * Checks if the passed values are valid for backlog
-     */
-    /**
      * Validates the Backlog configuration and returns the configure object.
-     * @throws BacklogApiException if the API call fails
      * @throws IllegalArgumentException if workspace or API key is empty
      */
     fun validateBacklogConfigs(workspaceName: String, apiKey: String, topLevelDomain: TopLevelDomain): BacklogConfigure {
