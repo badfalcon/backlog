@@ -12,7 +12,6 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -39,7 +38,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
     init {
         thisLogger().warn("[backlog] " + "ToolWindowService.init")
-        pullRequestService = project.service<PullRequestService>()
+        pullRequestService = project.getService(PullRequestService::class.java)
 
 //        getPullRequests()
         // subscribe to update topic

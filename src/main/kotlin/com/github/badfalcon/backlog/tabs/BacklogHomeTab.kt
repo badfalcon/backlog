@@ -3,7 +3,6 @@ package com.github.badfalcon.backlog.tabs
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
 import com.github.badfalcon.backlog.service.GitService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBLabel
@@ -76,9 +75,9 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         // get project
         val project = ProjectManager.getInstance().openProjects[0]
         // backlogがisReadyならばreadyと表示
-        val backlogReady : Boolean = project.service<BacklogService>().isReady
+        val backlogReady : Boolean = project.getService(BacklogService::class.java).isReady
         // gitがisReadyならばreadyと表示
-        val gitReady  : Boolean = project.service<GitService>().isReady
+        val gitReady  : Boolean = project.getService(GitService::class.java).isReady
         val mainPanel = panel {
             row {
                 cell(JBLabel("Git"))

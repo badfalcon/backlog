@@ -1,7 +1,10 @@
 package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.service.BacklogService
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 
@@ -17,7 +20,7 @@ class MyPluginSettingsState : PersistentStateComponent<MyPluginSettingsState> {
 
     companion object {
         fun getInstance(project: Project): MyPluginSettingsState {
-            return project.service<MyPluginSettingsState>()
+            return project.getService(MyPluginSettingsState::class.java)
         }
     }
 

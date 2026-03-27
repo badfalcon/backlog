@@ -1,7 +1,6 @@
 package com.github.badfalcon.backlog.service
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -17,8 +16,8 @@ class PullRequestService(project: Project) {
     val isReady: Boolean get() = backlogService?.isReady == true && gitService?.isReady == true
     init {
         thisLogger().warn("[backlog] "+"PullRequestService.init")
-        backlogService = project.service<BacklogService>()
-        gitService = project.service<GitService>()
+        backlogService = project.getService(BacklogService::class.java)
+        gitService = project.getService(GitService::class.java)
     }
 
     fun getPullRequests(): ResponseList<PullRequest>? {

@@ -2,7 +2,6 @@ package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -92,7 +91,7 @@ class BacklogSettingsComponent(private var project: Project) {
         myInputCheckButton.addActionListener {
             if(workspaceNameText != "" && apiKeyText != ""){
                 // check if the values are valid
-                val backlogService = project.service<BacklogService>()
+                val backlogService = project.getService(BacklogService::class.java)
                 val config = backlogService.isValidBacklogConfigs(workspaceNameText, apiKeyText, topLevelDomain)
                 val isValid = config != null
 
