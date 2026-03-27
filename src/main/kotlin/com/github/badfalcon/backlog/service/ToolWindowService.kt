@@ -75,6 +75,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             toolWindow.contentManager.addContent(content)
         }
 
+        getPullRequests()
     }
 
     fun getPullRequests() {

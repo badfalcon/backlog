@@ -38,7 +38,6 @@ dependencies {
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
-        instrumentationTools()
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
@@ -108,7 +107,7 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            ide(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
+            recommended()
         }
     }
 }

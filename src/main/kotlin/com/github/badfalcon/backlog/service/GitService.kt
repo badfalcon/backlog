@@ -3,6 +3,7 @@ package com.github.badfalcon.backlog.service
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -16,9 +17,12 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
-class GitService(private var project: Project) {
+class GitService(private var project: Project, private val cs: CoroutineScope) {
     var repository: GitRepository? = null
     val isReady: Boolean get() = repository != null
 
@@ -27,6 +31,9 @@ class GitService(private var project: Project) {
         project.messageBus.connect().subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
             checkRepositoryReady()
         })
+        cs.launch(Dispatchers.IO) {
+            checkRepositoryReady()
+        }
     }
 
     fun checkRepositoryReady() {
