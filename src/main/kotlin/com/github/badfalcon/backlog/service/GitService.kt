@@ -16,9 +16,12 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
-class GitService(private var project: Project) {
+class GitService(private val project: Project, cs: CoroutineScope) {
     var repository: GitRepository? = null
     val isReady: Boolean get() = repository != null
 
@@ -27,6 +30,9 @@ class GitService(private var project: Project) {
         project.messageBus.connect().subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
             checkRepositoryReady()
         })
+        cs.launch(Dispatchers.IO) {
+            checkRepositoryReady()
+        }
     }
 
     fun checkRepositoryReady() {

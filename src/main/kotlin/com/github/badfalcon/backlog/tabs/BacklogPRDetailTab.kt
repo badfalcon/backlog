@@ -163,8 +163,8 @@ class BacklogPRDetailTab(
         val header = table.tableHeader
         val columnModel = table.columnModel
         for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
-                .getTableCellRendererComponent(table, header.getColumnModel().getColumn(column).getHeaderValue(), false, false, -1, column)
+            var maxWidth = header.defaultRenderer
+                .getTableCellRendererComponent(table, header.columnModel.getColumn(column).headerValue, false, false, -1, column)
                 .preferredSize.width
             for (row in 0 until table.rowCount) {
                 val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)

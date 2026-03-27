@@ -3,7 +3,6 @@ package com.github.badfalcon.backlog.tabs
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
 import com.github.badfalcon.backlog.service.GitService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.JBLabel
@@ -52,7 +51,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             addActionListener {
                 reloadButton.isEnabled = false
                 pullRequestTable.isEnabled = false
-                statusLabel.text = "reloading"
+                statusLabel.text = "Reloading"
 
                 // update window
                 val project = ProjectManager.getInstance().openProjects[0]
@@ -61,8 +60,7 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
                 publisher.update("reload")
             }
         }
-        val pullRequests: ResponseList<PullRequest>? = null
-        this.update(pullRequests)
+        this.update(null as ResponseList<PullRequest>?)
 
         this.layout = BorderLayout()
         reload(false)
@@ -77,17 +75,17 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         // get project
         val project = ProjectManager.getInstance().openProjects[0]
         // backlogがisReadyならばreadyと表示
-        val backlogReady : Boolean = project.service<BacklogService>().isReady
+        val backlogReady : Boolean = project.getService(BacklogService::class.java).isReady
         // gitがisReadyならばreadyと表示
-        val gitReady  : Boolean = project.service<GitService>().isReady
+        val gitReady  : Boolean = project.getService(GitService::class.java).isReady
         val mainPanel = panel {
             row {
                 cell(JBLabel("Git"))
-                cell(JBLabel(if(gitReady) "ready" else "not ready"))
+                cell(JBLabel(if(gitReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(JBLabel("Backlog"))
-                cell(JBLabel(if(backlogReady) "ready" else "not ready"))
+                cell(JBLabel(if(backlogReady) "Ready" else "Not ready"))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
@@ -141,10 +139,10 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
         val header = table.tableHeader
         val columnModel = table.columnModel
         for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
+            var maxWidth = header.defaultRenderer
                 .getTableCellRendererComponent(
                     table,
-                    header.getColumnModel().getColumn(column).getHeaderValue(),
+                    header.columnModel.getColumn(column).headerValue,
                     false,
                     false,
                     -1,

@@ -1,7 +1,6 @@
 package com.github.badfalcon.backlog.toolWindow
 
 import com.github.badfalcon.backlog.service.ToolWindowService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -16,7 +15,7 @@ class BacklogToolWindowFactory : ToolWindowFactory {
         thisLogger().warn("[backlog] "+ "createToolWindowContent")
         println("createToolWindowContent")
         // initialize tool window service
-        val service = project.service<ToolWindowService>()
+        project.getService(ToolWindowService::class.java)
     }
 
     override fun shouldBeAvailable(project: Project) = true

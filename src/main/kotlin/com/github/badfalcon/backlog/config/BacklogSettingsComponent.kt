@@ -2,7 +2,6 @@ package com.github.badfalcon.backlog.config
 
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -23,9 +22,9 @@ class BacklogSettingsComponent(private var project: Project) {
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBTextField()
     private val myProjectNameText = JBTextField()
-    private val comboBox = ComboBox(BacklogService.TopLevelDomain.values().map { it.value }.toTypedArray())
+    private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
 
-    private val myInputCheckButton = JButton("run")
+    private val myInputCheckButton = JButton("Run")
     private val myInputStatusCheckLabel = JBLabel()
 
     init {
@@ -36,6 +35,7 @@ class BacklogSettingsComponent(private var project: Project) {
             }
             group("Backlog Settings") {
                 row("workspace info: ") {
+                    @Suppress("DialogTitleCapitalization")
                     cell (JBLabel("https://")).gap(RightGap.SMALL)
                     cell(myWorkspaceNameText).gap(RightGap.SMALL)
                     cell (JBLabel(".backlog.")).gap(RightGap.SMALL)
@@ -81,7 +81,7 @@ class BacklogSettingsComponent(private var project: Project) {
     var topLevelDomain: BacklogService.TopLevelDomain
         get() {
             val selectedValue = comboBox.selectedItem as String
-            return BacklogService.TopLevelDomain.values().firstOrNull { it.value == selectedValue }
+            return BacklogService.TopLevelDomain.entries.firstOrNull { it.value == selectedValue }
                 ?: BacklogService.TopLevelDomain.COM
         }
         set(newSelection) {
@@ -92,9 +92,9 @@ class BacklogSettingsComponent(private var project: Project) {
         myInputCheckButton.addActionListener {
             if(workspaceNameText != "" && apiKeyText != ""){
                 // check if the values are valid
-                val backlogService = project.service<BacklogService>()
+                val backlogService = project.getService(BacklogService::class.java)
                 val config = backlogService.isValidBacklogConfigs(workspaceNameText, apiKeyText, topLevelDomain)
-                val isValid : Boolean = config != null
+                val isValid = config != null
 
                 updateStatus(isValid)
                 if ( isValid){

@@ -12,7 +12,6 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -26,7 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.swing.SwingUtilities
+
 
 @Service(Service.Level.PROJECT)
 class ToolWindowService(private var project: Project, private val cs: CoroutineScope) {
@@ -39,7 +38,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
     init {
         thisLogger().warn("[backlog] " + "ToolWindowService.init")
-        pullRequestService = project.service<PullRequestService>()
+        pullRequestService = project.getService(PullRequestService::class.java)
 
 //        getPullRequests()
         // subscribe to update topic
@@ -75,6 +74,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             toolWindow.contentManager.addContent(content)
         }
 
+        getPullRequests()
     }
 
     fun getPullRequests() {
@@ -168,26 +168,35 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
 
     fun showDiff(change: Change) {
-        val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
-        val request = createDiffRequest(change, fileName)
-        request?.let {
-            SwingUtilities.invokeLater {
-                DiffManager.getInstance().showDiff(project, it)
+        cs.launch {
+            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+            val request = withContext(Dispatchers.IO) {
+                createDiffRequest(change, fileName)
+            }
+            request?.let {
+                ApplicationManager.getApplication().invokeLater {
+                    DiffManager.getInstance().showDiff(project, it)
+                }
             }
         }
     }
 
+    @Suppress("UnstableApiUsage")
     fun showCommit(commit: GitCommit) {
-        val diffRequests = commit.changes.mapIndexedNotNull { idx, change ->
-            val shortId = commit.id.toShortString()
-            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
-            val title = "$shortId diff ${idx + 1}/${commit.changes.size} ($fileName)"
-            createDiffRequest(change, title)
-        }
+        cs.launch {
+            val diffRequests = withContext(Dispatchers.IO) {
+                commit.changes.mapIndexedNotNull { idx, change ->
+                    val shortId = commit.id.toShortString()
+                    val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+                    val title = "$shortId diff ${idx + 1}/${commit.changes.size} ($fileName)"
+                    createDiffRequest(change, title)
+                }
+            }
 
-        val diffRequestChain = SimpleDiffRequestChain(diffRequests)
-        SwingUtilities.invokeLater {
-            DiffManager.getInstance().showDiff(project, diffRequestChain, DiffDialogHints.DEFAULT)
+            val diffRequestChain = SimpleDiffRequestChain(diffRequests)
+            ApplicationManager.getApplication().invokeLater {
+                DiffManager.getInstance().showDiff(project, diffRequestChain, DiffDialogHints.DEFAULT)
+            }
         }
     }
 
