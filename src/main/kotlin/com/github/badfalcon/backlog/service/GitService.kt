@@ -21,7 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
-class GitService(private var project: Project, private val cs: CoroutineScope) {
+class GitService(private val project: Project, private val cs: CoroutineScope) {
     var repository: GitRepository? = null
     val isReady: Boolean get() = repository != null
 

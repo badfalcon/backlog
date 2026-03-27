@@ -76,7 +76,7 @@ class BacklogService(project: Project) {
             projectKey = ""
             repoId = 0
             projectLoop@ for (proj in backlogClient!!.projects) {
-                var repositories: ResponseList<Repository>? = null
+                val repositories: ResponseList<Repository>?
                 try {
                     repositories = backlogClient!!.getGitRepositories(proj.projectKey)
                 } catch (e: Exception) {

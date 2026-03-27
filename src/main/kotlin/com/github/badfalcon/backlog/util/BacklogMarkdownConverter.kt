@@ -11,7 +11,7 @@ class BacklogMarkdownConverter {
 
         // replace headers
         for (i in 9 downTo 1) {
-            val headerPattern = Regex("""\*{${i}}\s?(.*)\r?\n""")
+            val headerPattern = Regex("""\*{$i}\s?(.*)\r?\n""")
             val headerReplacement = "<h${i}>$1</h${i}>\n"
             result = headerPattern.replace(result, headerReplacement)
         }
@@ -20,12 +20,12 @@ class BacklogMarkdownConverter {
         for(i in 1 .. 9)
         {
             // replace list groups
-            val listGroupPattern = Regex("""(-{${i},}\s.+\r?\n)+""")
+            val listGroupPattern = Regex("""(-{$i,}\s.+\r?\n)+""")
             val listGroupReplacement = "<ul>\n$0</ul>\n"
             result = listGroupPattern.replace(result, listGroupReplacement)
 
             // replace list items
-            val listItemPattern = Regex("""^-{${i}}\s(.+)$""", RegexOption.MULTILINE)
+            val listItemPattern = Regex("""^-{$i}\s(.+)$""", RegexOption.MULTILINE)
             val listItemReplacement = "<li>$1</li>"
             result = listItemPattern.replace(result, listItemReplacement)
         }

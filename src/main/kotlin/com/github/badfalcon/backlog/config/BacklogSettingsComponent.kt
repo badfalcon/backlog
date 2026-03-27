@@ -35,6 +35,7 @@ class BacklogSettingsComponent(private var project: Project) {
             }
             group("Backlog Settings") {
                 row("workspace info: ") {
+                    @Suppress("DialogTitleCapitalization")
                     cell (JBLabel("https://")).gap(RightGap.SMALL)
                     cell(myWorkspaceNameText).gap(RightGap.SMALL)
                     cell (JBLabel(".backlog.")).gap(RightGap.SMALL)

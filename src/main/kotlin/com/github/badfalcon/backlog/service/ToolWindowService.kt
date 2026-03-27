@@ -181,6 +181,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         }
     }
 
+    @Suppress("UnstableApiUsage")
     fun showCommit(commit: GitCommit) {
         cs.launch {
             val diffRequests = withContext(Dispatchers.IO) {
