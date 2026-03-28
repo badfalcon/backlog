@@ -143,10 +143,7 @@ tasks {
         // Remove the coroutines debug agent to avoid NoSuchMethodError caused by
         // version mismatch between the agent and IntelliJ's bundled coroutines
         doFirst {
-            jvmArgs = jvmArgs.orEmpty().filterNot { it.contains("kotlinx-coroutines") }.toMutableList()
-            jvmArgumentProviders.removeAll { provider ->
-                provider.asArguments().any { it.contains("kotlinx-coroutines") }
-            }
+            allJvmArgs = allJvmArgs.filterNot { it.contains("kotlinx-coroutines") }
         }
     }
 }
