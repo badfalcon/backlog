@@ -1,6 +1,7 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.tasks.PrepareTestTask
 
 plugins {
     id("java") // Java support
@@ -139,25 +140,12 @@ tasks {
         dependsOn(patchChangelog)
     }
 
-    test {
-        // Remove the coroutines debug agent to avoid NoSuchMethodError caused by
-        // version mismatch between the agent and IntelliJ's bundled coroutines.
-        // The agent is added by IntelliJPlatformArgumentProvider via jvmArgumentProviders.
-        // We wrap providers after evaluation to filter out the -javaagent arg.
-    }
-}
-
-afterEvaluate {
-    tasks.test {
-        val originalProviders = jvmArgumentProviders.toList()
-        jvmArgumentProviders.clear()
-        originalProviders.forEach { provider ->
-            jvmArgumentProviders.add(CommandLineArgumentProvider {
-                provider.asArguments().filter { arg ->
-                    !arg.contains("-javaagent") || !arg.contains("coroutines")
-                }
-            })
-        }
+    // Disable the coroutines debug agent to avoid NoSuchMethodError caused by
+    // version mismatch between the agent and IntelliJ's bundled coroutines-core.
+    // IntelliJPlatformArgumentProvider reads this property lazily via orNull,
+    // so clearing it here makes the provider skip the -javaagent arg at execution time.
+    named<PrepareTestTask>("prepareTest") {
+        coroutinesJavaAgentFile.set(null as? org.gradle.api.file.RegularFile)
     }
 }
 
