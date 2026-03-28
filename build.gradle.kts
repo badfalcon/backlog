@@ -138,6 +138,14 @@ tasks {
     publishPlugin {
         dependsOn(patchChangelog)
     }
+
+    test {
+        // Remove the coroutines debug agent to avoid NoSuchMethodError caused by
+        // version mismatch between the agent and IntelliJ's bundled coroutines
+        doFirst {
+            jvmArgs = jvmArgs?.filterNot { it.contains("kotlinx-coroutines") }
+        }
+    }
 }
 
 intellijPlatformTesting {
