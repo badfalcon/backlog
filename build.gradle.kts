@@ -144,6 +144,9 @@ tasks {
         // version mismatch between the agent and IntelliJ's bundled coroutines
         doFirst {
             jvmArgs = jvmArgs.orEmpty().filterNot { it.contains("kotlinx-coroutines") }.toMutableList()
+            jvmArgumentProviders.removeAll { provider ->
+                provider.asArguments().any { it.contains("kotlinx-coroutines") }
+            }
         }
     }
 }
