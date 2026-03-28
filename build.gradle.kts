@@ -28,7 +28,10 @@ repositories {
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
     testImplementation(libs.junit)
-    testImplementation(libs.mockk)
+    testImplementation(libs.mockk) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+    }
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
@@ -48,6 +51,14 @@ dependencies {
     implementation("com.nulab-inc:backlog4j:2.6.0")
 
     testImplementation("org.opentest4j:opentest4j:1.3.0")
+}
+
+// Exclude external kotlinx-coroutines from the test classpath to avoid version conflicts
+// with IntelliJ Platform's bundled coroutines. External versions (e.g. from MockK) cause
+// NoSuchMethodError in CoroutineDumpState / DebugProbesImpl due to internal API changes.
+configurations.testRuntimeClasspath {
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
 }
 
 // Set the JVM language level used to build the project.
