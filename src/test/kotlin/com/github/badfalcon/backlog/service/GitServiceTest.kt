@@ -15,6 +15,11 @@ class GitServiceTest : BasePlatformTestCase() {
         gitService = project.getService(GitService::class.java)
     }
 
+    override fun tearDown() {
+        gitService.repository = null
+        super.tearDown()
+    }
+
     // --- Guard condition tests ---
 
     fun testIsReadyDefaultFalse() {

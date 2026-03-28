@@ -17,6 +17,9 @@ class PullRequestServiceTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         pullRequestService = project.getService(PullRequestService::class.java)
+        // Reset to real services to prevent state leaking between tests
+        pullRequestService.backlogService = project.getService(BacklogService::class.java)
+        pullRequestService.gitService = project.getService(GitService::class.java)
     }
 
     // --- Guard condition tests (default state: both services not ready) ---
