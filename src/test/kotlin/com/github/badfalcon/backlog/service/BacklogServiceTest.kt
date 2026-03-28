@@ -15,6 +15,13 @@ class BacklogServiceTest : BasePlatformTestCase() {
         backlogService = project.getService(BacklogService::class.java)
     }
 
+    override fun tearDown() {
+        backlogService.backlogClient = null
+        backlogService.projectKey = ""
+        backlogService.repoId = 0
+        super.tearDown()
+    }
+
     // --- TopLevelDomain tests ---
 
     fun testTopLevelDomainValues() {
