@@ -142,9 +142,21 @@ tasks {
     test {
         // Remove the coroutines debug agent to avoid NoSuchMethodError caused by
         // version mismatch between the agent and IntelliJ's bundled coroutines.
-        // Must be done at configuration time (not doFirst) for Gradle 9 config cache compatibility.
-        jvmArgumentProviders.removeAll {
-            it.javaClass.name.contains("Coroutines")
+        // The agent is added by IntelliJPlatformArgumentProvider via jvmArgumentProviders.
+        // We wrap providers after evaluation to filter out the -javaagent arg.
+    }
+}
+
+afterEvaluate {
+    tasks.test {
+        val originalProviders = jvmArgumentProviders.toList()
+        jvmArgumentProviders.clear()
+        originalProviders.forEach { provider ->
+            jvmArgumentProviders.add(CommandLineArgumentProvider {
+                provider.asArguments().filter { arg ->
+                    !arg.contains("-javaagent") || !arg.contains("coroutines")
+                }
+            })
         }
     }
 }
