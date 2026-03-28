@@ -141,9 +141,10 @@ tasks {
 
     test {
         // Remove the coroutines debug agent to avoid NoSuchMethodError caused by
-        // version mismatch between the agent and IntelliJ's bundled coroutines
-        doFirst {
-            allJvmArgs = allJvmArgs.filterNot { it.contains("kotlinx-coroutines") }
+        // version mismatch between the agent and IntelliJ's bundled coroutines.
+        // Must be done at configuration time (not doFirst) for Gradle 9 config cache compatibility.
+        jvmArgumentProviders.removeAll {
+            it.javaClass.name.contains("Coroutines")
         }
     }
 }
