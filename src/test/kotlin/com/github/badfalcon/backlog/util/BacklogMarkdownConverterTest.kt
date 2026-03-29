@@ -183,6 +183,48 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertTrue(result.contains("<i>italic</i>"))
     }
 
+    fun testTable() {
+        val result = converter.toHtml("{table}col1|col2\nval1|val2{/table}", null, null)
+        assertTrue(result.contains("<table>"))
+        assertTrue(result.contains("<th>col1</th><th>col2</th>"))
+        assertTrue(result.contains("<td>val1</td><td>val2</td>"))
+        assertTrue(result.contains("</table>"))
+        assertFalse(result.contains("{table}"))
+    }
+
+    fun testTableSingleRow() {
+        val result = converter.toHtml("{table}a|b{/table}", null, null)
+        assertTrue(result.contains("<th>a</th><th>b</th>"))
+    }
+
+    fun testTableMultipleRows() {
+        val result = converter.toHtml("{table}h1|h2\nr1c1|r1c2\nr2c1|r2c2{/table}", null, null)
+        assertTrue(result.contains("<th>h1</th><th>h2</th>"))
+        assertTrue(result.contains("<td>r1c1</td><td>r1c2</td>"))
+        assertTrue(result.contains("<td>r2c1</td><td>r2c2</td>"))
+    }
+
+    fun testThumbnail() {
+        val imageBytes = "fake-image-data".toByteArray()
+
+        val attachment = mockk<Attachment>()
+        every { attachment.name } returns "thumb.png"
+        every { attachment.isImage } returns true
+
+        val attachmentData = mockk<AttachmentData>()
+        every { attachmentData.filename } returns "thumb.png"
+        every { attachmentData.content } returns ByteArrayInputStream(imageBytes)
+
+        val result = converter.toHtml(
+            "#thumbnail(thumb.png)",
+            mutableListOf(attachment),
+            mutableListOf(attachmentData)
+        )
+        assertTrue(result.contains("<img src=\"data:image/jpeg;base64,"))
+        assertTrue(result.contains("class=\"thumbnail\""))
+        assertFalse(result.contains("#thumbnail"))
+    }
+
     fun testCombinedMarkup() {
         val result = converter.toHtml("* Header\n- item1\n- item2\nsome text\n", null, null)
         assertTrue(result.contains("<h1>Header</h1>"))

@@ -58,23 +58,48 @@ class BacklogMarkdownConverter {
         val colorPattern = Regex("""&color\((.+?)\)\{(.+?)\}&""")
         result = colorPattern.replace(result, """<span style="color:$1">$2</span>""")
 
-        // show images
+        // replace tables
+        val tablePattern = Regex("""\{table\}(.*?)\{/table\}""", RegexOption.DOT_MATCHES_ALL)
+        result = tablePattern.replace(result) { match ->
+            val tableContent = match.groupValues[1].trim()
+            val rows = tableContent.split(Regex("""\r?\n"""))
+            val htmlRows = rows.mapIndexed { index, row ->
+                val cells = row.split("|")
+                val tag = if (index == 0) "th" else "td"
+                val htmlCells = cells.joinToString("") { "<$tag>${it.trim()}</$tag>" }
+                "<tr>$htmlCells</tr>"
+            }
+            "<table>${htmlRows.joinToString("")}</table>"
+        }
+
+        // show images and thumbnails
         if (attachments != null) {
             for (attachment in attachments) {
                 if (!attachment.isImage){
                     continue
                 }
 
-                val imagePattern = Regex("""#image\(${attachment.name}\)""")
-                if (!imagePattern.containsMatchIn(result)) {
+                val imagePattern = Regex("""#image\(${Regex.escape(attachment.name)}\)""")
+                val thumbnailPattern = Regex("""#thumbnail\(${Regex.escape(attachment.name)}\)""")
+                val hasImage = imagePattern.containsMatchIn(result)
+                val hasThumbnail = thumbnailPattern.containsMatchIn(result)
+
+                if (!hasImage && !hasThumbnail) {
                     continue
                 }
 
                 val attachmentDatum = attachmentData?.find { it.filename == attachment.name } ?: continue
                 val bytes = attachmentDatum.content.readBytes()
                 val base64 = Base64.encodeBase64String(bytes)
-                val imageReplacement = "<img src=\"data:image/jpeg;base64,${base64}\">"
-                result = imagePattern.replace(result, imageReplacement)
+
+                if (hasImage) {
+                    val imageReplacement = "<img src=\"data:image/jpeg;base64,${base64}\">"
+                    result = imagePattern.replace(result, imageReplacement)
+                }
+                if (hasThumbnail) {
+                    val thumbnailReplacement = "<img src=\"data:image/jpeg;base64,${base64}\" class=\"thumbnail\">"
+                    result = thumbnailPattern.replace(result, thumbnailReplacement)
+                }
             }
         }
 
@@ -83,7 +108,11 @@ class BacklogMarkdownConverter {
         return "<html><head><style>" +
             "blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; } " +
             "pre { background-color: #f4f4f4; border: 1px solid #ddd; border-radius: 3px; padding: 8px; overflow-x: auto; } " +
-            "code { font-family: monospace; }" +
+            "code { font-family: monospace; } " +
+            "table { border-collapse: collapse; margin: 4px 0; } " +
+            "th, td { border: 1px solid #ddd; padding: 4px 8px; } " +
+            "th { background-color: #f4f4f4; font-weight: bold; } " +
+            ".thumbnail { max-width: 200px; max-height: 200px; } " +
             "</style></head><body>$result</body></html>"
     }
 }
