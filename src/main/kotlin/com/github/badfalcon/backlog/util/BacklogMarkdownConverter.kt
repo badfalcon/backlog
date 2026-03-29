@@ -45,13 +45,26 @@ class BacklogMarkdownConverter {
                 val attachmentDatum = attachmentData?.find { it.filename == attachment.name } ?: continue
                 val bytes = attachmentDatum.content.readBytes()
                 val base64 = Base64.encodeBase64String(bytes)
-                val imageReplacement = "<img src=\"data:image/jpeg;base64,${base64}\">"
+                val mimeType = guessMimeType(attachment.name)
+                val imageReplacement = "<img src=\"data:${mimeType};base64,${base64}\">"
                 result = imagePattern.replace(result, imageReplacement)
             }
         }
 
-        // replace new lines
-        result = result.replace("\n", "<br>")
+        // replace remaining new lines (but not after block-level elements)
+        result = Regex("""(?<!</h[1-9]>)(?<!</ul>)(?<!</li>)\n""").replace(result, "<br>")
         return "<html><body>$result</body></html>"
+    }
+
+    private fun guessMimeType(filename: String): String {
+        val ext = filename.substringAfterLast('.', "").lowercase()
+        return when (ext) {
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            "svg" -> "image/svg+xml"
+            "bmp" -> "image/bmp"
+            else -> "image/jpeg"
+        }
     }
 }

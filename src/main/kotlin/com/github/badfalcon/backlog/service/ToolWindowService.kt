@@ -11,7 +11,6 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -53,29 +52,32 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             UPDATE_TOPIC,
             object : ToolWindowNotifier {
                 override fun update(message: String) {
-                    println("Received message: $message")
+                    thisLogger().warn("[backlog] Received message: $message")
                     getPullRequests()
                 }
             })
-
-        // create home tab
-        val pullRequestListener = object : PullRequestSelectionListener {
-            override fun onPullRequestSelected(pullRequest: PullRequest) {
-                println("Selected Pull Request: ${pullRequest.summary}")
-                tryGetPullRequestTabContent(pullRequest)
-            }
-        }
-        homeTab = BacklogHomeTab(pullRequestListener)
 
         // set to tool window
         val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
         if (window != null) {
             toolWindow = window
+        }
 
-            val homeTab = homeTab.getContent()
+        // create home tab
+        val pullRequestListener = object : PullRequestSelectionListener {
+            override fun onPullRequestSelected(pullRequest: PullRequest) {
+                thisLogger().warn("[backlog] Selected Pull Request: ${pullRequest.summary}")
+                tryGetPullRequestTabContent(pullRequest)
+            }
+        }
+        homeTab = BacklogHomeTab(project, toolWindow.disposable, pullRequestListener)
+
+        // add home tab to tool window
+        if (::toolWindow.isInitialized) {
+            val homeTabContent = homeTab.getContent()
             val contentFactory = ContentFactory.getInstance()
             val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-            val content = contentFactory.createContent(homeTab, tabTitle, false)
+            val content = contentFactory.createContent(homeTabContent, tabTitle, false)
             content.isCloseable = false
 
             toolWindow.contentManager.addContent(content)
@@ -131,7 +133,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
     private val commitListener = object : CommitSelectionListener {
         override fun onCommitSelected(commit: GitCommit) {
-            thisLogger().warn("Commit selected")
+            thisLogger().warn("[backlog] Commit selected")
             showCommit(commit)
         }
     }
@@ -140,7 +142,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
 
         // Show loading tab immediately
-        val loadingPanel = JBLoadingPanel(BorderLayout(), Disposable {})
+        val loadingPanel = JBLoadingPanel(BorderLayout(), toolWindow.disposable)
         loadingPanel.startLoading()
         val contentFactory = ContentFactory.getInstance()
         val content = contentFactory.createContent(loadingPanel, pullRequest.number.toString(), false)
