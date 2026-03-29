@@ -64,7 +64,7 @@ class BacklogMarkdownConverter {
         result = colorPattern.replace(result, """<span style="color:$1">$2</span>""")
 
         // auto-link bare URLs (skip URLs already inside href="...")
-        val urlPattern = Regex("""(?<!href=")(?<!\w)(https?://[^\s<>。、）」』】\)]+)""")
+        val urlPattern = Regex("""(?<!href=")(?<!>)(?<!\w)(https?://[^\s<>。、）」』】\)]+)""")
         result = urlPattern.replace(result, """<a href="$1">$1</a>""")
 
         // replace tables
@@ -117,7 +117,11 @@ class BacklogMarkdownConverter {
 
         // restore code blocks (after <br> replacement to preserve newlines in <pre>)
         for (i in codeBlocks.indices) {
-            result = result.replace("\u0000CODE_BLOCK_$i\u0000", "<pre><code>${codeBlocks[i]}</code></pre>")
+            val escaped = codeBlocks[i]
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            result = result.replace("\u0000CODE_BLOCK_$i\u0000", "<pre><code>$escaped</code></pre>")
         }
         return "<html><head><style>" +
             "blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; } " +

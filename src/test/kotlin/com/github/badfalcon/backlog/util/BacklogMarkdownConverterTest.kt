@@ -200,6 +200,12 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertFalse(result.contains("<i>"))
     }
 
+    fun testCodeBlockEscapesHtml() {
+        val result = converter.toHtml("{code}<div>test</div>{/code}", null, null)
+        assertTrue(result.contains("&lt;div&gt;test&lt;/div&gt;"))
+        assertFalse(result.contains("<div>test</div>"))
+    }
+
     fun testBareUrlExcludesJapanesePunctuation() {
         val result = converter.toHtml("see https://example.com。details", null, null)
         assertTrue(result.contains("<a href=\"https://example.com\">https://example.com</a>"))
