@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import javax.swing.JButton
@@ -20,14 +21,14 @@ import javax.swing.Timer
 /**
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
-class BacklogSettingsComponent(private var project: Project) {
+class BacklogSettingsComponent(private val project: Project) {
     val panel: DialogPanel
     private val myWorkspaceNameText = JBTextField()
-    private val myApiKeyText = JBTextField()
+    private val myApiKeyText = JBPasswordField()
     private val myProjectNameText = JBTextField()
     private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
 
-    private val myInputCheckButton = JButton("Run")
+    private val myInputCheckButton = JButton(BacklogBundle.message("settings.validate.button"))
     private val myInputStatusCheckLabel = JBLabel()
     private var statusDismissTimer: Timer? = null
 
@@ -37,21 +38,21 @@ class BacklogSettingsComponent(private var project: Project) {
             row {
                 cell(JBLabel("Backlog")).bold()
             }
-            group("Backlog Settings") {
-                row("workspace info: ") {
+            group(BacklogBundle.message("settings.group.title")) {
+                row(BacklogBundle.message("settings.workspace.label")) {
                     @Suppress("DialogTitleCapitalization")
-                    cell (JBLabel("https://")).gap(RightGap.SMALL)
+                    cell(JBLabel("https://")).gap(RightGap.SMALL)
                     cell(myWorkspaceNameText).gap(RightGap.SMALL)
-                    cell (JBLabel(".backlog.")).gap(RightGap.SMALL)
-                    cell (comboBox)
+                    cell(JBLabel(".backlog.")).gap(RightGap.SMALL)
+                    cell(comboBox)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("api key: ") {
+                row(BacklogBundle.message("settings.apiKey.label")) {
                     cell(myApiKeyText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("project name: ") {
+                row(BacklogBundle.message("settings.projectName.label")) {
                     cell(myProjectNameText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("Check Valid: ") {
+                row(BacklogBundle.message("settings.validate.label")) {
                     cell(myInputCheckButton)
                     cell(myInputStatusCheckLabel)
                 }.layout(RowLayout.LABEL_ALIGNED)
@@ -71,7 +72,7 @@ class BacklogSettingsComponent(private var project: Project) {
         }
 
     var apiKeyText: String
-        get() = myApiKeyText.text
+        get() = String(myApiKeyText.password)
         set(newText) {
             myApiKeyText.text = newText
         }
@@ -130,7 +131,7 @@ class BacklogSettingsComponent(private var project: Project) {
             myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.success")
             myInputStatusCheckLabel.foreground = JBColor.GREEN
         } else {
-            val detail = errorMessage ?: "Unknown error"
+            val detail = errorMessage ?: BacklogBundle.message("error.unknown")
             myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.failure", detail)
             myInputStatusCheckLabel.foreground = JBColor.RED
         }

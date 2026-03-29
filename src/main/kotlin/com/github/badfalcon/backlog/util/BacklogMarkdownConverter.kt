@@ -100,20 +100,21 @@ class BacklogMarkdownConverter {
                 val attachmentDatum = attachmentData?.find { it.filename == attachment.name } ?: continue
                 val bytes = attachmentDatum.content.readBytes()
                 val base64 = Base64.encodeBase64String(bytes)
+                val mimeType = guessMimeType(attachment.name)
 
                 if (hasImage) {
-                    val imageReplacement = "<img src=\"data:image/jpeg;base64,${base64}\">"
+                    val imageReplacement = "<img src=\"data:${mimeType};base64,${base64}\">"
                     result = imagePattern.replace(result, imageReplacement)
                 }
                 if (hasThumbnail) {
-                    val thumbnailReplacement = "<img src=\"data:image/jpeg;base64,${base64}\" class=\"thumbnail\">"
+                    val thumbnailReplacement = "<img src=\"data:${mimeType};base64,${base64}\" class=\"thumbnail\">"
                     result = thumbnailPattern.replace(result, thumbnailReplacement)
                 }
             }
         }
 
-        // replace new lines
-        result = result.replace("\n", "<br>")
+        // replace remaining new lines (but not after block-level elements)
+        result = Regex("""(?<!</h[1-9]>)(?<!</ul>)(?<!</li>)\n""").replace(result, "<br>")
 
         // restore code blocks (after <br> replacement to preserve newlines in <pre>)
         for (i in codeBlocks.indices) {
@@ -132,5 +133,17 @@ class BacklogMarkdownConverter {
             "th { background-color: #f4f4f4; font-weight: bold; } " +
             ".thumbnail { max-width: 200px; max-height: 200px; } " +
             "</style></head><body>$result</body></html>"
+    }
+
+    private fun guessMimeType(filename: String): String {
+        val ext = filename.substringAfterLast('.', "").lowercase()
+        return when (ext) {
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            "svg" -> "image/svg+xml"
+            "bmp" -> "image/bmp"
+            else -> "image/jpeg"
+        }
     }
 }
