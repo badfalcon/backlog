@@ -48,7 +48,7 @@ class BacklogHomeTab(
     private var filteredPullRequests: List<PullRequest>? = null
 
     init {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
+        thisLogger().warn("[backlog] BacklogHomeTab.init")
         layout = BorderLayout()
 
         // create pull request selection table
@@ -134,7 +134,7 @@ class BacklogHomeTab(
     }
 
     fun update(pullRequests: ResponseList<PullRequest>?) {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
+        thisLogger().warn("[backlog] BacklogHomeTab.update")
         this.pullRequests = pullRequests
         this.filteredPullRequests = pullRequests?.toList()
         searchField.text = ""

@@ -44,7 +44,7 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
     var tabs: MutableMap<Long, Content> = mutableMapOf()
 
     init {
-        thisLogger().warn("[backlog] " + "ToolWindowService.init")
+        thisLogger().warn("[backlog] ToolWindowService.init")
         pullRequestService = project.getService(PullRequestService::class.java)
 
         // subscribe to update topic
@@ -87,7 +87,11 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
     }
 
     fun getPullRequests() {
-        thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
+        thisLogger().warn("[backlog] ToolWindowService.getPullRequests")
+        if (!::toolWindow.isInitialized) {
+            thisLogger().warn("[backlog] ToolWindow not initialized, skipping getPullRequests")
+            return
+        }
         cs.launch {
             try {
                 val pullRequests = withContext(Dispatchers.IO) {
@@ -114,7 +118,8 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
     }
 
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
+        thisLogger().warn("[backlog] ToolWindowService.tryGetPullRequestTabContent")
+        if (!::toolWindow.isInitialized) return
         val contentManager = toolWindow.contentManager
         val content = contentManager.findContent(pullRequest.number.toString())
         if (content != null) {
@@ -139,7 +144,8 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
     }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
+        thisLogger().warn("[backlog] ToolWindowService.createPullRequestTabContent")
+        if (!::toolWindow.isInitialized) return
 
         // Show loading tab immediately
         val loadingPanel = JBLoadingPanel(BorderLayout(), toolWindow.disposable)
@@ -215,7 +221,7 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
 
     fun showDiff(change: Change) {
         cs.launch {
-            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: BacklogBundle.message("diff.unknownFile")
             val request = withContext(Dispatchers.IO) {
                 createDiffRequest(change, fileName)
             }
@@ -233,7 +239,7 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
             val diffRequests = withContext(Dispatchers.IO) {
                 commit.changes.mapIndexedNotNull { idx, change ->
                     val shortId = commit.id.toShortString()
-                    val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+                    val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: BacklogBundle.message("diff.unknownFile")
                     val title = "$shortId diff ${idx + 1}/${commit.changes.size} ($fileName)"
                     createDiffRequest(change, title)
                 }

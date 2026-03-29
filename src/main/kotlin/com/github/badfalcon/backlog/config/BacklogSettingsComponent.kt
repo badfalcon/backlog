@@ -21,7 +21,7 @@ import javax.swing.Timer
 /**
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
-class BacklogSettingsComponent(private var project: Project) {
+class BacklogSettingsComponent(private val project: Project) {
     val panel: DialogPanel
     private val myWorkspaceNameText = JBTextField()
     private val myApiKeyText = JBPasswordField()
