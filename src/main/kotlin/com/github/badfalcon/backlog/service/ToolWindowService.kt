@@ -11,7 +11,6 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -35,7 +34,7 @@ import javax.swing.JPanel
 
 
 @Service(Service.Level.PROJECT)
-class ToolWindowService(private var project: Project, private val cs: CoroutineScope) {
+class ToolWindowService(private val project: Project, private val cs: CoroutineScope) {
     lateinit var toolWindow: ToolWindow
 
     var pullRequestService: PullRequestService
@@ -44,48 +43,54 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     var tabs: MutableMap<Long, Content> = mutableMapOf()
 
     init {
-        thisLogger().warn("[backlog] " + "ToolWindowService.init")
+        thisLogger().warn("[backlog] ToolWindowService.init")
         pullRequestService = project.getService(PullRequestService::class.java)
 
-//        getPullRequests()
         // subscribe to update topic
         project.messageBus.connect().subscribe(
             UPDATE_TOPIC,
             object : ToolWindowNotifier {
                 override fun update(message: String) {
-                    println("Received message: $message")
+                    thisLogger().warn("[backlog] Received message: $message")
                     getPullRequests()
                 }
             })
 
-        // create home tab
+        // set to tool window
+        val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
         val pullRequestListener = object : PullRequestSelectionListener {
             override fun onPullRequestSelected(pullRequest: PullRequest) {
-                println("Selected Pull Request: ${pullRequest.summary}")
+                thisLogger().warn("[backlog] Selected Pull Request: ${pullRequest.summary}")
                 tryGetPullRequestTabContent(pullRequest)
             }
         }
-        homeTab = BacklogHomeTab(pullRequestListener)
-
-        // set to tool window
-        val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
-        if (window != null) {
+        if (window == null) {
+            thisLogger().warn("[backlog] ToolWindow 'Backlog' not found, skipping UI initialization")
+            homeTab = BacklogHomeTab(project, { }, pullRequestListener)
+        } else {
             toolWindow = window
 
-            val homeTab = homeTab.getContent()
+            // create home tab
+            homeTab = BacklogHomeTab(project, toolWindow.disposable, pullRequestListener)
+
+            // add home tab to tool window
+            val homeTabContent = homeTab.getContent()
             val contentFactory = ContentFactory.getInstance()
             val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-            val content = contentFactory.createContent(homeTab, tabTitle, false)
+            val content = contentFactory.createContent(homeTabContent, tabTitle, false)
             content.isCloseable = false
-
             toolWindow.contentManager.addContent(content)
-        }
 
-        getPullRequests()
+            getPullRequests()
+        }
     }
 
     fun getPullRequests() {
-        thisLogger().warn("[backlog] " + "ToolWindowService.getPullRequests")
+        thisLogger().warn("[backlog] ToolWindowService.getPullRequests")
+        if (!::toolWindow.isInitialized) {
+            thisLogger().warn("[backlog] ToolWindow not initialized, skipping getPullRequests")
+            return
+        }
         cs.launch {
             try {
                 val pullRequests = withContext(Dispatchers.IO) {
@@ -105,14 +110,15 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             } catch (e: Exception) {
                 thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
                 ApplicationManager.getApplication().invokeLater {
-                    homeTab.showError(e.message ?: "Unknown error")
+                    homeTab.showError(e.message ?: BacklogBundle.message("error.unknown"))
                 }
             }
         }
     }
 
     fun tryGetPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.tryGetPullRequestTabContent")
+        thisLogger().warn("[backlog] ToolWindowService.tryGetPullRequestTabContent")
+        if (!::toolWindow.isInitialized) return
         val contentManager = toolWindow.contentManager
         val content = contentManager.findContent(pullRequest.number.toString())
         if (content != null) {
@@ -131,16 +137,17 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
     }
     private val commitListener = object : CommitSelectionListener {
         override fun onCommitSelected(commit: GitCommit) {
-            thisLogger().warn("Commit selected")
+            thisLogger().warn("[backlog] Commit selected")
             showCommit(commit)
         }
     }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
-        thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
+        thisLogger().warn("[backlog] ToolWindowService.createPullRequestTabContent")
+        if (!::toolWindow.isInitialized) return
 
         // Show loading tab immediately
-        val loadingPanel = JBLoadingPanel(BorderLayout(), Disposable {})
+        val loadingPanel = JBLoadingPanel(BorderLayout(), toolWindow.disposable)
         loadingPanel.startLoading()
         val contentFactory = ContentFactory.getInstance()
         val content = contentFactory.createContent(loadingPanel, pullRequest.number.toString(), false)
@@ -174,7 +181,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                     } catch (e: Exception) {
                         thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
                         loadingPanel.stopLoading()
-                        loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                        loadingPanel.add(createErrorPanel(e.message ?: BacklogBundle.message("error.unknown")) {
                             contentManager.removeContent(content, true)
                             tabs.remove(pullRequest.number)
                             createPullRequestTabContent(pullRequest)
@@ -186,7 +193,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 thisLogger().warn("[backlog] Failed to fetch PR detail data: ${e.message}", e)
                 ApplicationManager.getApplication().invokeLater {
                     loadingPanel.stopLoading()
-                    loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                    loadingPanel.add(createErrorPanel(e.message ?: BacklogBundle.message("error.unknown")) {
                         contentManager.removeContent(content, true)
                         tabs.remove(pullRequest.number)
                         createPullRequestTabContent(pullRequest)
@@ -213,7 +220,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
     fun showDiff(change: Change) {
         cs.launch {
-            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+            val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: BacklogBundle.message("diff.unknownFile")
             val request = withContext(Dispatchers.IO) {
                 createDiffRequest(change, fileName)
             }
@@ -231,7 +238,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             val diffRequests = withContext(Dispatchers.IO) {
                 commit.changes.mapIndexedNotNull { idx, change ->
                     val shortId = commit.id.toShortString()
-                    val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: "Unknown File"
+                    val fileName = change.afterRevision?.file?.name ?: change.beforeRevision?.file?.name ?: BacklogBundle.message("diff.unknownFile")
                     val title = "$shortId diff ${idx + 1}/${commit.changes.size} ($fileName)"
                     createDiffRequest(change, title)
                 }
