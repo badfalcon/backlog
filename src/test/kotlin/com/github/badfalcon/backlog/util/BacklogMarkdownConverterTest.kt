@@ -193,6 +193,19 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertTrue(result.contains("<a href=\"http://example.com\">http://example.com</a>"))
     }
 
+    fun testCodeBlockPreservesMarkup() {
+        val result = converter.toHtml("{code}'''not bold''' and ''not italic''{/code}", null, null)
+        assertTrue(result.contains("'''not bold'''"))
+        assertFalse(result.contains("<b>"))
+        assertFalse(result.contains("<i>"))
+    }
+
+    fun testBareUrlExcludesJapanesePunctuation() {
+        val result = converter.toHtml("see https://example.com。details", null, null)
+        assertTrue(result.contains("<a href=\"https://example.com\">https://example.com</a>"))
+        assertTrue(result.contains("。details"))
+    }
+
     fun testBoldAndItalicCombined() {
         val result = converter.toHtml("'''bold''' and ''italic''", null, null)
         assertTrue(result.contains("<b>bold</b>"))
