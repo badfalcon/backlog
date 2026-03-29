@@ -11,7 +11,7 @@ class BacklogMarkdownConverter {
 
         // extract code blocks first to protect their content from other transformations
         val codeBlocks = mutableListOf<String>()
-        val codePattern = Regex("""\{code\}(.*?)\{/code\}""", RegexOption.DOT_MATCHES_ALL)
+        val codePattern = Regex("""\{code}(.*?)\{/code}""", RegexOption.DOT_MATCHES_ALL)
         result = codePattern.replace(result) { match ->
             val index = codeBlocks.size
             codeBlocks.add(match.groupValues[1])
@@ -40,7 +40,7 @@ class BacklogMarkdownConverter {
         }
 
         // replace quotes
-        val quotePattern = Regex("""\{quote\}(.*?)\{/quote\}""", RegexOption.DOT_MATCHES_ALL)
+        val quotePattern = Regex("""\{quote}(.*?)\{/quote}""", RegexOption.DOT_MATCHES_ALL)
         result = quotePattern.replace(result, "<blockquote>$1</blockquote>")
 
         // replace bold
@@ -60,15 +60,15 @@ class BacklogMarkdownConverter {
         result = linkPattern.replace(result, """<a href="$2">$1</a>""")
 
         // replace color
-        val colorPattern = Regex("""&color\((.+?)\)\{(.+?)\}&""")
+        val colorPattern = Regex("""&color\((.+?)\)\{(.+?)}&""")
         result = colorPattern.replace(result, """<span style="color:$1">$2</span>""")
 
         // auto-link bare URLs (skip URLs already inside href="...")
-        val urlPattern = Regex("""(?<!href=")(?<!>)(?<!\w)(https?://[^\s<>。、）」』】\)]+)""")
+        val urlPattern = Regex("""(?<!href=")(?<!>)(?<!\w)(https?://[^\s<>。、）」』】)]+)""")
         result = urlPattern.replace(result, """<a href="$1">$1</a>""")
 
         // replace tables
-        val tablePattern = Regex("""\{table\}(.*?)\{/table\}""", RegexOption.DOT_MATCHES_ALL)
+        val tablePattern = Regex("""\{table}(.*?)\{/table}""", RegexOption.DOT_MATCHES_ALL)
         result = tablePattern.replace(result) { match ->
             val tableContent = match.groupValues[1].trim()
             val rows = tableContent.split(Regex("""\r?\n"""))
