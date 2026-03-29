@@ -13,12 +13,12 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
 
     fun testPlainText() {
         val result = converter.toHtml("hello", null, null)
-        assertEquals("<html><body>hello</body></html>", result)
+        assertTrue(result.contains("<body>hello</body>"))
     }
 
     fun testEmptyString() {
         val result = converter.toHtml("", null, null)
-        assertEquals("<html><body></body></html>", result)
+        assertTrue(result.contains("<body></body>"))
     }
 
     fun testSingleHeader() {
@@ -58,8 +58,9 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
 
     fun testHtmlWrapping() {
         val result = converter.toHtml("test", null, null)
-        assertTrue(result.startsWith("<html><body>"))
+        assertTrue(result.startsWith("<html>"))
         assertTrue(result.endsWith("</body></html>"))
+        assertTrue(result.contains("<body>test</body>"))
     }
 
     fun testImageReplacement() {

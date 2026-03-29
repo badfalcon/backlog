@@ -56,6 +56,6 @@ class BacklogMarkdownConverter {
 
         // replace new lines
         result = result.replace("\n", "<br>")
-        return "<html><body>$result</body></html>"
+        return "<html><head><style>blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; }</style></head><body>$result</body></html>"
     }
 }
