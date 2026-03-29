@@ -255,7 +255,7 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
             mutableListOf(attachment),
             mutableListOf(attachmentData)
         )
-        assertTrue(result.contains("<img src=\"data:image/jpeg;base64,"))
+        assertTrue(result.contains("<img src=\"data:image/png;base64,"))
         assertTrue(result.contains("class=\"thumbnail\""))
         assertFalse(result.contains("#thumbnail"))
     }
