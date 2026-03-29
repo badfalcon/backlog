@@ -34,9 +34,12 @@ class BacklogMarkdownConverter {
         val quotePattern = Regex("""\{quote\}(.*?)\{/quote\}""", RegexOption.DOT_MATCHES_ALL)
         result = quotePattern.replace(result, "<blockquote>$1</blockquote>")
 
-        // replace code blocks
+        // replace code blocks (preserve newlines inside <pre>)
         val codePattern = Regex("""\{code\}(.*?)\{/code\}""", RegexOption.DOT_MATCHES_ALL)
-        result = codePattern.replace(result, "<pre><code>$1</code></pre>")
+        result = codePattern.replace(result) { match ->
+            val code = match.groupValues[1].replace("\n", "\u0000")
+            "<pre><code>$code</code></pre>"
+        }
 
         // replace bold
         val boldPattern = Regex("""'''(.+?)'''""")
@@ -107,8 +110,9 @@ class BacklogMarkdownConverter {
             }
         }
 
-        // replace new lines
+        // replace new lines (restore preserved newlines in code blocks)
         result = result.replace("\n", "<br>")
+        result = result.replace("\u0000", "\n")
         return "<html><head><style>" +
             "blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; } " +
             "pre { background-color: #f4f4f4; border: 1px solid #ddd; border-radius: 3px; padding: 8px; overflow-x: auto; } " +

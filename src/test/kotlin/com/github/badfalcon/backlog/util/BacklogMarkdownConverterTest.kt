@@ -144,7 +144,8 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
 
     fun testCodeBlockMultiline() {
         val result = converter.toHtml("{code}line1\nline2{/code}", null, null)
-        assertTrue(result.contains("<pre><code>line1<br>line2</code></pre>"))
+        assertTrue(result.contains("<pre><code>line1\nline2</code></pre>"))
+        assertFalse(result.contains("<pre><code>line1<br>line2</code></pre>"))
     }
 
     fun testBold() {
