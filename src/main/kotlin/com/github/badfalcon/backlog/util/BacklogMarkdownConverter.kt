@@ -58,6 +58,10 @@ class BacklogMarkdownConverter {
         val colorPattern = Regex("""&color\((.+?)\)\{(.+?)\}&""")
         result = colorPattern.replace(result, """<span style="color:$1">$2</span>""")
 
+        // auto-link bare URLs (skip URLs already inside href="...")
+        val urlPattern = Regex("""(?<!href=")(?<!\w)(https?://[^\s<>]+)""")
+        result = urlPattern.replace(result, """<a href="$1">$1</a>""")
+
         // replace tables
         val tablePattern = Regex("""\{table\}(.*?)\{/table\}""", RegexOption.DOT_MATCHES_ALL)
         result = tablePattern.replace(result) { match ->

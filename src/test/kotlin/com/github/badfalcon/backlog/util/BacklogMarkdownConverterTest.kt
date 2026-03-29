@@ -177,6 +177,21 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertFalse(result.contains("&color"))
     }
 
+    fun testBareUrl() {
+        val result = converter.toHtml("see https://example.com for details", null, null)
+        assertTrue(result.contains("<a href=\"https://example.com\">https://example.com</a>"))
+    }
+
+    fun testBareUrlNotDoubled() {
+        val result = converter.toHtml("[[link>https://example.com]]", null, null)
+        assertEquals(1, Regex("""<a """).findAll(result).count())
+    }
+
+    fun testBareHttpUrl() {
+        val result = converter.toHtml("http://example.com", null, null)
+        assertTrue(result.contains("<a href=\"http://example.com\">http://example.com</a>"))
+    }
+
     fun testBoldAndItalicCombined() {
         val result = converter.toHtml("'''bold''' and ''italic''", null, null)
         assertTrue(result.contains("<b>bold</b>"))
