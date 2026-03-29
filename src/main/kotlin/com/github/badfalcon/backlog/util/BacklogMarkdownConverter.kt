@@ -37,7 +37,7 @@ class BacklogMarkdownConverter {
                     continue
                 }
 
-                val imagePattern = Regex("""#image\(${attachment.name}\)""")
+                val imagePattern = Regex("""#image\(${Regex.escape(attachment.name)}\)""")
                 if (!imagePattern.containsMatchIn(result)) {
                     continue
                 }

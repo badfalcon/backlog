@@ -131,7 +131,7 @@ class BacklogSettingsComponent(private var project: Project) {
             myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.success")
             myInputStatusCheckLabel.foreground = JBColor.GREEN
         } else {
-            val detail = errorMessage ?: "Unknown error"
+            val detail = errorMessage ?: BacklogBundle.message("error.unknown")
             myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.failure", detail)
             myInputStatusCheckLabel.foreground = JBColor.RED
         }

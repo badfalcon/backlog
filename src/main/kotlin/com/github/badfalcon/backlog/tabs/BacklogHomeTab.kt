@@ -35,16 +35,16 @@ class BacklogHomeTab(
     private val pullRequestSelectionListener: PullRequestSelectionListener
 ) : JBPanel<JBPanel<*>>() {
 
-    val reloadButton: JButton = JButton(BacklogBundle.message("homeTab.reload")).apply {
+    private val reloadButton: JButton = JButton(BacklogBundle.message("homeTab.reload")).apply {
         icon = AllIcons.Actions.Refresh
     }
-    val statusLabel: JBLabel = JBLabel()
-    val searchField: SearchTextField = SearchTextField()
+    private val statusLabel: JBLabel = JBLabel()
+    private val searchField: SearchTextField = SearchTextField()
     private val tableLoadingPanel: JBLoadingPanel = JBLoadingPanel(BorderLayout(), parentDisposable)
 
-    var pullRequestTable: JBTable = JBTable(createTableModel(null))
+    private val pullRequestTable: JBTable = JBTable(createTableModel(null))
 
-    var pullRequests: ResponseList<PullRequest>? = null
+    private var pullRequests: ResponseList<PullRequest>? = null
     private var filteredPullRequests: List<PullRequest>? = null
 
     init {

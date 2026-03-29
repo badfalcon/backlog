@@ -11,6 +11,7 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -34,7 +35,7 @@ import javax.swing.JPanel
 
 
 @Service(Service.Level.PROJECT)
-class ToolWindowService(private var project: Project, private val cs: CoroutineScope) {
+class ToolWindowService(private val project: Project, private val cs: CoroutineScope) {
     lateinit var toolWindow: ToolWindow
 
     var pullRequestService: PullRequestService
@@ -46,7 +47,6 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         thisLogger().warn("[backlog] " + "ToolWindowService.init")
         pullRequestService = project.getService(PullRequestService::class.java)
 
-//        getPullRequests()
         // subscribe to update topic
         project.messageBus.connect().subscribe(
             UPDATE_TOPIC,
@@ -59,29 +59,29 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
 
         // set to tool window
         val window = ToolWindowManager.getInstance(project).getToolWindow("Backlog")
-        if (window != null) {
-            toolWindow = window
-        }
-
-        // create home tab
         val pullRequestListener = object : PullRequestSelectionListener {
             override fun onPullRequestSelected(pullRequest: PullRequest) {
                 thisLogger().warn("[backlog] Selected Pull Request: ${pullRequest.summary}")
                 tryGetPullRequestTabContent(pullRequest)
             }
         }
+        if (window == null) {
+            thisLogger().warn("[backlog] ToolWindow 'Backlog' not found, skipping UI initialization")
+            homeTab = BacklogHomeTab(project, Disposable { }, pullRequestListener)
+            return@init
+        }
+        toolWindow = window
+
+        // create home tab
         homeTab = BacklogHomeTab(project, toolWindow.disposable, pullRequestListener)
 
         // add home tab to tool window
-        if (::toolWindow.isInitialized) {
-            val homeTabContent = homeTab.getContent()
-            val contentFactory = ContentFactory.getInstance()
-            val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-            val content = contentFactory.createContent(homeTabContent, tabTitle, false)
-            content.isCloseable = false
-
-            toolWindow.contentManager.addContent(content)
-        }
+        val homeTabContent = homeTab.getContent()
+        val contentFactory = ContentFactory.getInstance()
+        val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
+        val content = contentFactory.createContent(homeTabContent, tabTitle, false)
+        content.isCloseable = false
+        toolWindow.contentManager.addContent(content)
 
         getPullRequests()
     }
@@ -107,7 +107,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             } catch (e: Exception) {
                 thisLogger().warn("[backlog] Failed to fetch pull requests: ${e.message}", e)
                 ApplicationManager.getApplication().invokeLater {
-                    homeTab.showError(e.message ?: "Unknown error")
+                    homeTab.showError(e.message ?: BacklogBundle.message("error.unknown"))
                 }
             }
         }
@@ -176,7 +176,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                     } catch (e: Exception) {
                         thisLogger().warn("[backlog] Failed to create PR detail tab UI: ${e.message}", e)
                         loadingPanel.stopLoading()
-                        loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                        loadingPanel.add(createErrorPanel(e.message ?: BacklogBundle.message("error.unknown")) {
                             contentManager.removeContent(content, true)
                             tabs.remove(pullRequest.number)
                             createPullRequestTabContent(pullRequest)
@@ -188,7 +188,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 thisLogger().warn("[backlog] Failed to fetch PR detail data: ${e.message}", e)
                 ApplicationManager.getApplication().invokeLater {
                     loadingPanel.stopLoading()
-                    loadingPanel.add(createErrorPanel(e.message ?: "Unknown error") {
+                    loadingPanel.add(createErrorPanel(e.message ?: BacklogBundle.message("error.unknown")) {
                         contentManager.removeContent(content, true)
                         tabs.remove(pullRequest.number)
                         createPullRequestTabContent(pullRequest)

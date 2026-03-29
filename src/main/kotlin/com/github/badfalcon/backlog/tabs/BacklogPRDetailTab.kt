@@ -56,7 +56,7 @@ class BacklogPRDetailTab(
         val htmlPanel = BacklogHtmlPanel(pullRequest.description, attachments, attachmentData)
         val pullRequestPanel = panel {
             row { cell(htmlPanel).align(Align.FILL) }
-        }.apply { isOpaque = false }
+        }
         val prpScrollPane = JBScrollPane(pullRequestPanel)
 
         // create changes
