@@ -68,22 +68,22 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
         if (window == null) {
             thisLogger().warn("[backlog] ToolWindow 'Backlog' not found, skipping UI initialization")
             homeTab = BacklogHomeTab(project, Disposable { }, pullRequestListener)
-            return@init
+        } else {
+            toolWindow = window
+
+            // create home tab
+            homeTab = BacklogHomeTab(project, toolWindow.disposable, pullRequestListener)
+
+            // add home tab to tool window
+            val homeTabContent = homeTab.getContent()
+            val contentFactory = ContentFactory.getInstance()
+            val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
+            val content = contentFactory.createContent(homeTabContent, tabTitle, false)
+            content.isCloseable = false
+            toolWindow.contentManager.addContent(content)
+
+            getPullRequests()
         }
-        toolWindow = window
-
-        // create home tab
-        homeTab = BacklogHomeTab(project, toolWindow.disposable, pullRequestListener)
-
-        // add home tab to tool window
-        val homeTabContent = homeTab.getContent()
-        val contentFactory = ContentFactory.getInstance()
-        val tabTitle = BacklogBundle.message("toolWindowHomeTabTitle")
-        val content = contentFactory.createContent(homeTabContent, tabTitle, false)
-        content.isCloseable = false
-        toolWindow.contentManager.addContent(content)
-
-        getPullRequests()
     }
 
     fun getPullRequests() {
