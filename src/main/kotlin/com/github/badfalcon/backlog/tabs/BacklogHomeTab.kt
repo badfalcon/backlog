@@ -31,7 +31,7 @@ import javax.swing.table.DefaultTableModel
 
 class BacklogHomeTab(
     private val project: Project,
-    private val parentDisposable: Disposable,
+    parentDisposable: Disposable,
     private val pullRequestSelectionListener: PullRequestSelectionListener
 ) : JBPanel<JBPanel<*>>() {
 
