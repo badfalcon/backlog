@@ -34,6 +34,30 @@ class BacklogMarkdownConverter {
         val quotePattern = Regex("""\{quote\}(.*?)\{/quote\}""", RegexOption.DOT_MATCHES_ALL)
         result = quotePattern.replace(result, "<blockquote>$1</blockquote>")
 
+        // replace code blocks
+        val codePattern = Regex("""\{code\}(.*?)\{/code\}""", RegexOption.DOT_MATCHES_ALL)
+        result = codePattern.replace(result, "<pre><code>$1</code></pre>")
+
+        // replace bold
+        val boldPattern = Regex("""'''(.+?)'''""")
+        result = boldPattern.replace(result, "<b>$1</b>")
+
+        // replace italic
+        val italicPattern = Regex("""''(.+?)''""")
+        result = italicPattern.replace(result, "<i>$1</i>")
+
+        // replace strikethrough
+        val strikethroughPattern = Regex("""%%(.+?)%%""")
+        result = strikethroughPattern.replace(result, "<s>$1</s>")
+
+        // replace links
+        val linkPattern = Regex("""\[\[(.+?)>(.+?)]]""")
+        result = linkPattern.replace(result, """<a href="$2">$1</a>""")
+
+        // replace color
+        val colorPattern = Regex("""&color\((.+?)\)\{(.+?)\}&""")
+        result = colorPattern.replace(result, """<span style="color:$1">$2</span>""")
+
         // show images
         if (attachments != null) {
             for (attachment in attachments) {
@@ -56,6 +80,10 @@ class BacklogMarkdownConverter {
 
         // replace new lines
         result = result.replace("\n", "<br>")
-        return "<html><head><style>blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; }</style></head><body>$result</body></html>"
+        return "<html><head><style>" +
+            "blockquote { border-left: 3px solid #ccc; margin: 4px 0; padding: 4px 8px; color: #555; } " +
+            "pre { background-color: #f4f4f4; border: 1px solid #ddd; border-radius: 3px; padding: 8px; overflow-x: auto; } " +
+            "code { font-family: monospace; }" +
+            "</style></head><body>$result</body></html>"
     }
 }

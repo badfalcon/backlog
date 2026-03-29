@@ -136,6 +136,53 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertTrue(result.contains("<blockquote>second</blockquote>"))
     }
 
+    fun testCodeBlock() {
+        val result = converter.toHtml("{code}val x = 1{/code}", null, null)
+        assertTrue(result.contains("<pre><code>val x = 1</code></pre>"))
+        assertFalse(result.contains("{code}"))
+    }
+
+    fun testCodeBlockMultiline() {
+        val result = converter.toHtml("{code}line1\nline2{/code}", null, null)
+        assertTrue(result.contains("<pre><code>line1<br>line2</code></pre>"))
+    }
+
+    fun testBold() {
+        val result = converter.toHtml("'''bold text'''", null, null)
+        assertTrue(result.contains("<b>bold text</b>"))
+        assertFalse(result.contains("'''"))
+    }
+
+    fun testItalic() {
+        val result = converter.toHtml("''italic text''", null, null)
+        assertTrue(result.contains("<i>italic text</i>"))
+        assertFalse(result.contains("''"))
+    }
+
+    fun testStrikethrough() {
+        val result = converter.toHtml("%%deleted%%", null, null)
+        assertTrue(result.contains("<s>deleted</s>"))
+        assertFalse(result.contains("%%"))
+    }
+
+    fun testLink() {
+        val result = converter.toHtml("[[Google>https://google.com]]", null, null)
+        assertTrue(result.contains("<a href=\"https://google.com\">Google</a>"))
+        assertFalse(result.contains("[["))
+    }
+
+    fun testColor() {
+        val result = converter.toHtml("&color(red){warning}&", null, null)
+        assertTrue(result.contains("<span style=\"color:red\">warning</span>"))
+        assertFalse(result.contains("&color"))
+    }
+
+    fun testBoldAndItalicCombined() {
+        val result = converter.toHtml("'''bold''' and ''italic''", null, null)
+        assertTrue(result.contains("<b>bold</b>"))
+        assertTrue(result.contains("<i>italic</i>"))
+    }
+
     fun testCombinedMarkup() {
         val result = converter.toHtml("* Header\n- item1\n- item2\nsome text\n", null, null)
         assertTrue(result.contains("<h1>Header</h1>"))
