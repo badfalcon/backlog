@@ -30,6 +30,10 @@ class BacklogMarkdownConverter {
             result = listItemPattern.replace(result, listItemReplacement)
         }
 
+        // replace quotes
+        val quotePattern = Regex("""\{quote\}(.*?)\{/quote\}""", RegexOption.DOT_MATCHES_ALL)
+        result = quotePattern.replace(result, "<blockquote>$1</blockquote>")
+
         // show images
         if (attachments != null) {
             for (attachment in attachments) {

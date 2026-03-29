@@ -117,6 +117,24 @@ class BacklogMarkdownConverterTest : BasePlatformTestCase() {
         assertFalse(result.contains("<img"))
     }
 
+    fun testQuote() {
+        val result = converter.toHtml("{quote}quoted text{/quote}", null, null)
+        assertTrue(result.contains("<blockquote>quoted text</blockquote>"))
+        assertFalse(result.contains("{quote}"))
+        assertFalse(result.contains("{/quote}"))
+    }
+
+    fun testQuoteMultiline() {
+        val result = converter.toHtml("{quote}line1\nline2{/quote}", null, null)
+        assertTrue(result.contains("<blockquote>line1<br>line2</blockquote>"))
+    }
+
+    fun testMultipleQuotes() {
+        val result = converter.toHtml("{quote}first{/quote}\n{quote}second{/quote}", null, null)
+        assertTrue(result.contains("<blockquote>first</blockquote>"))
+        assertTrue(result.contains("<blockquote>second</blockquote>"))
+    }
+
     fun testCombinedMarkup() {
         val result = converter.toHtml("* Header\n- item1\n- item2\nsome text\n", null, null)
         assertTrue(result.contains("<h1>Header</h1>"))
