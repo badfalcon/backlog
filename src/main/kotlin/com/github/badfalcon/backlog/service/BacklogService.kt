@@ -18,6 +18,7 @@ class BacklogService(project: Project) {
         get() = backlogClient != null
     var projectKey: String = ""
     var repoId: Long = 0
+    var repoName: String = ""
 
     enum class TopLevelDomain(val value: String) {
         COM("com"),
@@ -71,6 +72,7 @@ class BacklogService(project: Project) {
         if (isReady) {
             projectKey = ""
             repoId = 0
+            repoName = ""
             projectLoop@ for (proj in backlogClient!!.projects) {
                 val repositories: ResponseList<Repository>?
                 try {
@@ -82,6 +84,7 @@ class BacklogService(project: Project) {
                     if (repo.httpUrl == targetRemoteUrl) {
                         projectKey = proj.projectKey
                         repoId = repo.id
+                        repoName = repo.name
                         break@projectLoop
                     }
                 }
@@ -100,6 +103,15 @@ class BacklogService(project: Project) {
             return pullRequests
         }
         return null
+    }
+
+    fun getPullRequestUrl(project: Project, prNumber: Long): String? {
+        val settings = MyPluginSettingsState.getInstance(project)
+        if (settings.workspaceName.isEmpty() || projectKey.isEmpty() || repoName.isEmpty()) {
+            return null
+        }
+        val tld = settings.topLevelDomain.value
+        return "https://${settings.workspaceName}.backlog.${tld}/git/${projectKey}/${repoName}/pullRequests/${prNumber}"
     }
 
     fun getImageAttachments(pullRequestId: Long, attachments: MutableList<Attachment>): MutableList<AttachmentData> {

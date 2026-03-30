@@ -32,7 +32,8 @@ class BacklogPRDetailTab(
     commits: MutableList<GitCommit>?,
     commitSelectionListener: CommitSelectionListener,
     attachments: MutableList<Attachment>?,
-    attachmentData: MutableList<AttachmentData>
+    attachmentData: MutableList<AttachmentData>,
+    prUrl: String? = null
 ) : JBPanel<JBPanel<*>>()  {
     private val basePath = Path(basePathStr?:"")
 
@@ -43,6 +44,9 @@ class BacklogPRDetailTab(
         val overviewPanel = panel {
             row("#" + pullRequest.number.toString()) {
                 label(pullRequest.summary)
+                if (prUrl != null) {
+                    browserLink(BacklogBundle.message("prDetail.overview.openInBacklog"), prUrl)
+                }
             }
             row(BacklogBundle.message("prDetail.overview.author")) {
                 label(pullRequest.createdUser.name)
