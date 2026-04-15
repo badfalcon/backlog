@@ -163,7 +163,7 @@ class BacklogServiceTest : BasePlatformTestCase() {
         assertEquals("https://myworkspace.backlog.jp/git/PROJ/repo/pullRequests/456", url)
     }
 
-    fun testGetPullRequestUrlReturnsNullWhenMissingData() {
+    fun testGetPullRequestUrlReturnsNullWhenMissingWorkspaceName() {
         val settings = MyPluginSettingsState.getInstance(project)
         settings.workspaceName = ""
 
