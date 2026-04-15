@@ -21,6 +21,11 @@ class BacklogServiceTest : BasePlatformTestCase() {
         backlogService.projectKey = ""
         backlogService.repoId = 0
         backlogService.repoName = ""
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = ""
+        settings.apiKey = ""
+        settings.projectName = ""
+        settings.topLevelDomain = BacklogService.TopLevelDomain.COM
         super.tearDown()
     }
 
