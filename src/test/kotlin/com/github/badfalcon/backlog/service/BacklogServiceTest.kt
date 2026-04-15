@@ -183,6 +183,16 @@ class BacklogServiceTest : BasePlatformTestCase() {
         assertNull(backlogService.getPullRequestUrl(project, 123L))
     }
 
+    fun testGetPullRequestUrlReturnsNullWhenMissingProjectKey() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "myworkspace"
+
+        backlogService.projectKey = ""
+        backlogService.repoName = "repo"
+
+        assertNull(backlogService.getPullRequestUrl(project, 123L))
+    }
+
     // --- getImageAttachments tests ---
 
     fun testGetImageAttachmentsWhenReady() {
