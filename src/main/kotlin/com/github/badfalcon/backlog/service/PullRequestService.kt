@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
+import com.nulabinc.backlog4j.PullRequestComment
 import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 
@@ -55,6 +56,21 @@ class PullRequestService(private var project: Project) {
         thisLogger().warn("[backlog] "+"PullRequestService.getAttachments")
         val attachmentData = backlogService.getImageAttachments(pullRequest.number, pullRequest.attachments)
         return attachmentData
+    }
+
+    fun getComments(pullRequest: PullRequest): ResponseList<PullRequestComment>? {
+        thisLogger().warn("[backlog] "+"PullRequestService.getComments")
+        return backlogService.getPullRequestComments(pullRequest.number)
+    }
+
+    fun addComment(pullRequest: PullRequest, content: String): PullRequestComment? {
+        thisLogger().warn("[backlog] "+"PullRequestService.addComment")
+        return backlogService.addPullRequestComment(pullRequest.number, content)
+    }
+
+    fun updateStatus(pullRequest: PullRequest, statusType: PullRequest.StatusType): PullRequest? {
+        thisLogger().warn("[backlog] "+"PullRequestService.updateStatus")
+        return backlogService.updatePullRequestStatus(pullRequest.number, statusType)
     }
 
 }

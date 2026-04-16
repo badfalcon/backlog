@@ -115,6 +115,16 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
             showCommit(commit)
         }
     }
+    private val commentListener = object : CommentPostListener {
+        override fun onCommentPost(pullRequest: PullRequest, content: String) {
+            postCommentAndRefresh(pullRequest, content)
+        }
+    }
+    private val statusListener = object : StatusChangeListener {
+        override fun onStatusChange(pullRequest: PullRequest, newStatus: PullRequest.StatusType) {
+            changeStatus(pullRequest, newStatus)
+        }
+    }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] " + "ToolWindowService.createPullRequestTabContent")
@@ -123,6 +133,7 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                 val changes = pullRequestService.getChanges(pullRequest)
                 val commits = pullRequestService.getCommits(pullRequest)
                 val attachments = pullRequestService.getAttachments(pullRequest)
+                val comments = pullRequestService.getComments(pullRequest)
                 ApplicationManager.getApplication().invokeLater {
                     val tabContent =
                         BacklogPRDetailTab(
@@ -133,7 +144,10 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
                             commits,
                             commitListener,
                             pullRequest.attachments,
-                            attachments
+                            attachments,
+                            comments,
+                            commentListener,
+                            statusListener
                         )
                     val contentFactory = ContentFactory.getInstance()
                     val content = contentFactory.createContent(tabContent, pullRequest.number.toString(), false)
@@ -169,6 +183,44 @@ class ToolWindowService(private var project: Project, private val cs: CoroutineS
         val diffRequestChain = SimpleDiffRequestChain(diffRequests)
         SwingUtilities.invokeLater {
             DiffManager.getInstance().showDiff(project, diffRequestChain, DiffDialogHints.DEFAULT)
+        }
+    }
+
+    private fun postCommentAndRefresh(pullRequest: PullRequest, content: String) {
+        cs.launch {
+            withContext(Dispatchers.IO) {
+                val result = pullRequestService.addComment(pullRequest, content)
+                if (result != null) {
+                    val freshComments = pullRequestService.getComments(pullRequest)
+                    ApplicationManager.getApplication().invokeLater {
+                        val tabContent = toolWindow.contentManager
+                            .findContent(pullRequest.number.toString())
+                        if (tabContent != null) {
+                            (tabContent.component as BacklogPRDetailTab).refreshComments(freshComments)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun changeStatus(pullRequest: PullRequest, newStatus: PullRequest.StatusType) {
+        cs.launch {
+            withContext(Dispatchers.IO) {
+                val updatedPr = pullRequestService.updateStatus(pullRequest, newStatus)
+                if (updatedPr != null) {
+                    ApplicationManager.getApplication().invokeLater {
+                        val contentManager = toolWindow.contentManager
+                        val existing = contentManager.findContent(pullRequest.number.toString())
+                        if (existing != null) {
+                            contentManager.removeContent(existing, true)
+                            tabs.remove(pullRequest.number)
+                        }
+                        createPullRequestTabContent(updatedPr)
+                        getPullRequests()
+                    }
+                }
+            }
         }
     }
 
