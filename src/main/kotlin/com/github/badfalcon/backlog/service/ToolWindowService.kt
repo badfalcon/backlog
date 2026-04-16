@@ -141,6 +141,16 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
             showCommit(commit)
         }
     }
+    private val commentListener = object : CommentPostListener {
+        override fun onCommentPost(pullRequest: PullRequest, content: String) {
+            postCommentAndRefresh(pullRequest, content)
+        }
+    }
+    private val statusListener = object : StatusChangeListener {
+        override fun onStatusChange(pullRequest: PullRequest, newStatus: PullRequest.StatusType) {
+            changeStatus(pullRequest, newStatus)
+        }
+    }
 
     fun createPullRequestTabContent(pullRequest: PullRequest) {
         thisLogger().warn("[backlog] ToolWindowService.createPullRequestTabContent")
@@ -162,6 +172,7 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
                 val changes = withContext(Dispatchers.IO) { pullRequestService.getChanges(pullRequest) }
                 val commits = withContext(Dispatchers.IO) { pullRequestService.getCommits(pullRequest) }
                 val attachments = withContext(Dispatchers.IO) { pullRequestService.getAttachments(pullRequest) }
+                val comments = withContext(Dispatchers.IO) { pullRequestService.getComments(pullRequest) }
                 ApplicationManager.getApplication().invokeLater {
                     try {
                         val prUrl = pullRequestService.backlogService.getPullRequestUrl(project, pullRequest.number)
@@ -174,6 +185,9 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
                             commitListener,
                             pullRequest.attachments,
                             attachments,
+                            comments,
+                            commentListener,
+                            statusListener,
                             prUrl
                         )
                         loadingPanel.stopLoading()
@@ -249,6 +263,46 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
             val diffRequestChain = SimpleDiffRequestChain(diffRequests)
             ApplicationManager.getApplication().invokeLater {
                 DiffManager.getInstance().showDiff(project, diffRequestChain, DiffDialogHints.DEFAULT)
+            }
+        }
+    }
+
+    private fun postCommentAndRefresh(pullRequest: PullRequest, content: String) {
+        cs.launch {
+            withContext(Dispatchers.IO) {
+                val result = pullRequestService.addComment(pullRequest, content)
+                if (result != null) {
+                    val freshComments = pullRequestService.getComments(pullRequest)
+                    ApplicationManager.getApplication().invokeLater {
+                        val tabContent = toolWindow.contentManager
+                            .findContent(pullRequest.number.toString())
+                        if (tabContent != null) {
+                            val loadingPanel = tabContent.component as? JBLoadingPanel
+                            val detailTab = loadingPanel?.components?.filterIsInstance<BacklogPRDetailTab>()?.firstOrNull()
+                            detailTab?.refreshComments(freshComments)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun changeStatus(pullRequest: PullRequest, newStatus: PullRequest.StatusType) {
+        cs.launch {
+            withContext(Dispatchers.IO) {
+                val updatedPr = pullRequestService.updateStatus(pullRequest, newStatus)
+                if (updatedPr != null) {
+                    ApplicationManager.getApplication().invokeLater {
+                        val contentManager = toolWindow.contentManager
+                        val existing = contentManager.findContent(pullRequest.number.toString())
+                        if (existing != null) {
+                            contentManager.removeContent(existing, true)
+                            tabs.remove(pullRequest.number)
+                        }
+                        createPullRequestTabContent(updatedPr)
+                        getPullRequests()
+                    }
+                }
             }
         }
     }

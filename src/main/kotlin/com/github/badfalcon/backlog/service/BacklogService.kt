@@ -6,10 +6,14 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.nulabinc.backlog4j.*
+import com.nulabinc.backlog4j.api.option.AddPullRequestCommentParams
 import com.nulabinc.backlog4j.api.option.PullRequestQueryParams
+import com.nulabinc.backlog4j.api.option.QueryParams
+import com.nulabinc.backlog4j.api.option.UpdatePullRequestParams
 import com.nulabinc.backlog4j.conf.BacklogComConfigure
 import com.nulabinc.backlog4j.conf.BacklogConfigure
 import com.nulabinc.backlog4j.conf.BacklogJpConfigure
+import com.nulabinc.backlog4j.http.NameValuePair
 
 @Service(Service.Level.PROJECT)
 class BacklogService(project: Project) {
@@ -125,5 +129,36 @@ class BacklogService(project: Project) {
             }
         }
         return list
+    }
+
+    fun getPullRequestComments(pullRequestNumber: Long): ResponseList<PullRequestComment>? {
+        thisLogger().warn("[backlog] " + "BacklogService.getPullRequestComments")
+        if (!isReady) return null
+        val queryParams = QueryParams()
+        queryParams.order(QueryParams.Order.Asc)
+        queryParams.count(100)
+        return backlogClient!!.getPullRequestComments(projectKey, repoId, pullRequestNumber, queryParams)
+    }
+
+    fun addPullRequestComment(pullRequestNumber: Long, content: String): PullRequestComment? {
+        thisLogger().warn("[backlog] " + "BacklogService.addPullRequestComment")
+        if (!isReady) return null
+        val params = AddPullRequestCommentParams(projectKey, repoId, pullRequestNumber, content)
+        return backlogClient!!.addPullRequestComment(params)
+    }
+
+    fun updatePullRequestStatus(pullRequestNumber: Long, statusType: PullRequest.StatusType): PullRequest? {
+        thisLogger().warn("[backlog] " + "BacklogService.updatePullRequestStatus")
+        if (!isReady) return null
+        val params = UpdatePullRequestWithStatusParams(projectKey, repoId, pullRequestNumber, statusType)
+        return backlogClient!!.updatePullRequest(params)
+    }
+}
+
+private class UpdatePullRequestWithStatusParams(
+    projectIdOrKey: Any, repoIdOrName: Any, number: Any, statusType: PullRequest.StatusType
+) : UpdatePullRequestParams(projectIdOrKey, repoIdOrName, number) {
+    init {
+        parameters.add(NameValuePair("statusId", statusType.intValue.toString()))
     }
 }

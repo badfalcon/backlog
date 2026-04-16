@@ -15,11 +15,18 @@ import com.intellij.util.ui.HtmlPanel
 import com.nulabinc.backlog4j.Attachment
 import com.nulabinc.backlog4j.AttachmentData
 import com.nulabinc.backlog4j.PullRequest
+import com.nulabinc.backlog4j.PullRequestComment
+import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 import java.awt.BorderLayout
+import com.intellij.openapi.ui.Messages
+import java.text.SimpleDateFormat
+import javax.swing.BoxLayout
+import javax.swing.JButton
 import javax.swing.JTable
-import javax.swing.table.DefaultTableModel
+import javax.swing.JTextArea
 import javax.swing.ListSelectionModel
+import javax.swing.table.DefaultTableModel
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -33,9 +40,13 @@ class BacklogPRDetailTab(
     commitSelectionListener: CommitSelectionListener,
     attachments: MutableList<Attachment>?,
     attachmentData: MutableList<AttachmentData>,
+    comments: ResponseList<PullRequestComment>?,
+    private val commentPostListener: CommentPostListener,
+    private val statusChangeListener: StatusChangeListener,
     prUrl: String? = null
 ) : JBPanel<JBPanel<*>>()  {
     private val basePath = Path(basePathStr?:"")
+    private lateinit var tabbedPane: JBTabbedPane
 
     init {
         this.layout = BorderLayout()
@@ -54,6 +65,58 @@ class BacklogPRDetailTab(
             row(BacklogBundle.message("prDetail.overview.branch")) {
                 label(pullRequest.base.toString() + " <- " + pullRequest.branch.toString())
             }
+            row(BacklogBundle.message("prDetail.overview.status")) {
+                label(pullRequest.status.name)
+            }
+        }
+
+        // create status action buttons
+        val statusPanel = JBPanel<JBPanel<*>>()
+        when (pullRequest.status.status) {
+            PullRequest.StatusType.Open -> {
+                val closeButton = JButton(BacklogBundle.message("prDetail.status.close"))
+                closeButton.addActionListener {
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.close"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        closeButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Closed)
+                    }
+                }
+                statusPanel.add(closeButton)
+                val mergeButton = JButton(BacklogBundle.message("prDetail.status.merge"))
+                mergeButton.addActionListener {
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.merge"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        mergeButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Merged)
+                    }
+                }
+                statusPanel.add(mergeButton)
+            }
+            PullRequest.StatusType.Closed -> {
+                val reopenButton = JButton(BacklogBundle.message("prDetail.status.reopen"))
+                reopenButton.addActionListener {
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.reopen"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        reopenButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Open)
+                    }
+                }
+                statusPanel.add(reopenButton)
+            }
+            else -> {}
         }
 
         // create description
@@ -72,10 +135,11 @@ class BacklogPRDetailTab(
         val commitsScrollPane = JBScrollPane(commitsTable)
 
         // create tabbed pane
-        val tabbedPane = JBTabbedPane()
+        tabbedPane = JBTabbedPane()
         tabbedPane.addTab(BacklogBundle.message("prDetail.tab.description"), null, prpScrollPane, BacklogBundle.message("prDetail.tab.description.tooltip"))
         tabbedPane.addTab(BacklogBundle.message("prDetail.tab.changes"), null, changesScrollPane, BacklogBundle.message("prDetail.tab.changes.tooltip"))
         tabbedPane.addTab(BacklogBundle.message("prDetail.tab.commits"), null, commitsScrollPane, BacklogBundle.message("prDetail.tab.commits.tooltip"))
+        tabbedPane.addTab(BacklogBundle.message("prDetail.tab.comments"), null, createCommentsPanel(comments), BacklogBundle.message("prDetail.tab.comments.tooltip"))
 
         // create main panel
         val mainPanel = panel {
@@ -83,10 +147,65 @@ class BacklogPRDetailTab(
                 cell(overviewPanel).align(Align.FILL)
             }
             row {
+                cell(statusPanel)
+            }
+            row {
                 cell(tabbedPane).align(Align.FILL)
             }.resizableRow()
         }
         add(mainPanel, BorderLayout.CENTER)
+    }
+
+    private fun createCommentsPanel(comments: ResponseList<PullRequestComment>?): JBPanel<JBPanel<*>> {
+        val commentsPanel = JBPanel<JBPanel<*>>(BorderLayout())
+
+        // comment list (scrollable)
+        val listPanel = JBPanel<JBPanel<*>>()
+        listPanel.layout = BoxLayout(listPanel, BoxLayout.Y_AXIS)
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+        comments?.forEach { comment ->
+            val item = panel {
+                row {
+                    label(comment.createdUser.name).bold()
+                    label(dateFormat.format(comment.created))
+                }
+                row {
+                    val commentHtml = BacklogHtmlPanel(comment.content ?: "", null, mutableListOf())
+                    cell(commentHtml).align(Align.FILL)
+                }
+                separator()
+            }
+            listPanel.add(item)
+        }
+        commentsPanel.add(JBScrollPane(listPanel), BorderLayout.CENTER)
+
+        // input area (bottom)
+        val inputPanel = JBPanel<JBPanel<*>>(BorderLayout())
+        val textArea = JTextArea(3, 40)
+        textArea.lineWrap = true
+        textArea.wrapStyleWord = true
+        inputPanel.add(JBScrollPane(textArea), BorderLayout.CENTER)
+
+        val postButton = JButton(BacklogBundle.message("prDetail.comments.postButton"))
+        postButton.addActionListener {
+            val content = textArea.text.trim()
+            if (content.isNotEmpty()) {
+                postButton.isEnabled = false
+                textArea.isEnabled = false
+                commentPostListener.onCommentPost(pullRequest, content)
+            }
+        }
+        inputPanel.add(postButton, BorderLayout.EAST)
+        commentsPanel.add(inputPanel, BorderLayout.SOUTH)
+
+        return commentsPanel
+    }
+
+    fun refreshComments(newComments: ResponseList<PullRequestComment>?) {
+        val newPanel = createCommentsPanel(newComments)
+        tabbedPane.setComponentAt(3, newPanel)
+        tabbedPane.revalidate()
+        tabbedPane.repaint()
     }
 
     private fun createChangesTable(changes: MutableCollection<Change>?, diffSelectionListener: DiffSelectionListener): JBTable {
@@ -169,6 +288,14 @@ interface DiffSelectionListener {
 
 interface CommitSelectionListener {
     fun onCommitSelected(commit: GitCommit)
+}
+
+interface CommentPostListener {
+    fun onCommentPost(pullRequest: PullRequest, content: String)
+}
+
+interface StatusChangeListener {
+    fun onStatusChange(pullRequest: PullRequest, newStatus: PullRequest.StatusType)
 }
 
 private class BacklogHtmlPanel(src: String, attachments: MutableList<Attachment>?, attachmentData: MutableList<AttachmentData>) : HtmlPanel(){

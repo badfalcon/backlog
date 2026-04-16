@@ -1,3 +1,4 @@
+import org.gradle.api.file.RegularFile
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
@@ -156,7 +157,7 @@ tasks {
     // IntelliJPlatformArgumentProvider reads this property lazily via orNull,
     // so clearing it here makes the provider skip the -javaagent arg at execution time.
     named<PrepareTestTask>("prepareTest") {
-        coroutinesJavaAgentFile.set(null as? org.gradle.api.file.RegularFile)
+        coroutinesJavaAgentFile.set(null as? RegularFile)
     }
 }
 
