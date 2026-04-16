@@ -19,6 +19,7 @@ import com.nulabinc.backlog4j.PullRequestComment
 import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 import java.awt.BorderLayout
+import com.intellij.openapi.ui.Messages
 import java.text.SimpleDateFormat
 import javax.swing.BoxLayout
 import javax.swing.JButton
@@ -75,22 +76,43 @@ class BacklogPRDetailTab(
             PullRequest.StatusType.Open -> {
                 val closeButton = JButton(BacklogBundle.message("prDetail.status.close"))
                 closeButton.addActionListener {
-                    closeButton.isEnabled = false
-                    statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Closed)
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.close"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        closeButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Closed)
+                    }
                 }
                 statusPanel.add(closeButton)
                 val mergeButton = JButton(BacklogBundle.message("prDetail.status.merge"))
                 mergeButton.addActionListener {
-                    mergeButton.isEnabled = false
-                    statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Merged)
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.merge"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        mergeButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Merged)
+                    }
                 }
                 statusPanel.add(mergeButton)
             }
             PullRequest.StatusType.Closed -> {
                 val reopenButton = JButton(BacklogBundle.message("prDetail.status.reopen"))
                 reopenButton.addActionListener {
-                    reopenButton.isEnabled = false
-                    statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Open)
+                    val result = Messages.showYesNoDialog(
+                        BacklogBundle.message("prDetail.status.confirm.reopen"),
+                        BacklogBundle.message("prDetail.status.confirm.title"),
+                        Messages.getQuestionIcon()
+                    )
+                    if (result == Messages.YES) {
+                        reopenButton.isEnabled = false
+                        statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Open)
+                    }
                 }
                 statusPanel.add(reopenButton)
             }
