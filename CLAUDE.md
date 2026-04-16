@@ -50,6 +50,12 @@ Uses IntelliJ's MessageBus with `ToolWindowNotifier.UPDATE_TOPIC` for publish/su
 
 Persistent state in `BacklogSettings.xml` via `BacklogSettingState`: `workspaceName`, `apiKey`, `projectName`, `topLevelDomain` (COM/JP). Settings UI: **Settings > Tools > Backlog**.
 
+## Release Process
+
+- リリースブランチでは `gradle.properties` のバージョン番号バンプのみ行う
+- `CHANGELOG.md` の `[Unreleased]` セクションの内容はそのまま残すこと（バージョンセクションに移動しない）
+- `build.yml` が `[Unreleased]` の内容を読んで Draft リリースのボディに入れ、`release.yml` の `patchChangelog` が公開時に自動で移動する
+
 ## Key Conventions
 
 - Log messages: `thisLogger().warn("[backlog] " + message)` — always prefix with `[backlog]`
