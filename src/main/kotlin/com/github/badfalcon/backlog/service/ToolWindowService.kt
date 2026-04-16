@@ -164,6 +164,7 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
                 val attachments = withContext(Dispatchers.IO) { pullRequestService.getAttachments(pullRequest) }
                 ApplicationManager.getApplication().invokeLater {
                     try {
+                        val prUrl = pullRequestService.backlogService.getPullRequestUrl(project, pullRequest.number)
                         val tabContent = BacklogPRDetailTab(
                             pullRequest,
                             project.basePath,
@@ -172,7 +173,8 @@ class ToolWindowService(private val project: Project, private val cs: CoroutineS
                             commits,
                             commitListener,
                             pullRequest.attachments,
-                            attachments
+                            attachments,
+                            prUrl
                         )
                         loadingPanel.stopLoading()
                         loadingPanel.add(tabContent, BorderLayout.CENTER)

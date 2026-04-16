@@ -1,5 +1,6 @@
 package com.github.badfalcon.backlog.service
 
+import com.github.badfalcon.backlog.config.MyPluginSettingsState
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.nulabinc.backlog4j.*
 import com.nulabinc.backlog4j.Project as BacklogProject
@@ -19,6 +20,12 @@ class BacklogServiceTest : BasePlatformTestCase() {
         backlogService.backlogClient = null
         backlogService.projectKey = ""
         backlogService.repoId = 0
+        backlogService.repoName = ""
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = ""
+        settings.apiKey = ""
+        settings.projectName = ""
+        settings.topLevelDomain = BacklogService.TopLevelDomain.COM
         super.tearDown()
     }
 
@@ -82,6 +89,7 @@ class BacklogServiceTest : BasePlatformTestCase() {
         val mockRepo = mockk<Repository>()
         every { mockRepo.httpUrl } returns targetUrl
         every { mockRepo.id } returns 42L
+        every { mockRepo.name } returns "repo"
 
         val mockProject = mockk<BacklogProject>()
         every { mockProject.projectKey } returns "PROJ"
@@ -104,6 +112,7 @@ class BacklogServiceTest : BasePlatformTestCase() {
         assertNotNull(result)
         assertEquals("PROJ", backlogService.projectKey)
         assertEquals(42L, backlogService.repoId)
+        assertEquals("repo", backlogService.repoName)
     }
 
     fun testGetPullRequestsNoMatchingRepo() {
@@ -127,6 +136,64 @@ class BacklogServiceTest : BasePlatformTestCase() {
 
         assertNull(result)
     }
+
+    // --- getPullRequestUrl tests ---
+
+    fun testGetPullRequestUrlSuccess() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "myworkspace"
+        settings.topLevelDomain = BacklogService.TopLevelDomain.COM
+
+        backlogService.projectKey = "PROJ"
+        backlogService.repoName = "repo"
+
+        val url = backlogService.getPullRequestUrl(project, 123L)
+        assertEquals("https://myworkspace.backlog.com/git/PROJ/repo/pullRequests/123", url)
+    }
+
+    fun testGetPullRequestUrlWithJpDomain() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "myworkspace"
+        settings.topLevelDomain = BacklogService.TopLevelDomain.JP
+
+        backlogService.projectKey = "PROJ"
+        backlogService.repoName = "repo"
+
+        val url = backlogService.getPullRequestUrl(project, 456L)
+        assertEquals("https://myworkspace.backlog.jp/git/PROJ/repo/pullRequests/456", url)
+    }
+
+    fun testGetPullRequestUrlReturnsNullWhenMissingWorkspaceName() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = ""
+
+        backlogService.projectKey = "PROJ"
+        backlogService.repoName = "repo"
+
+        assertNull(backlogService.getPullRequestUrl(project, 123L))
+    }
+
+    fun testGetPullRequestUrlReturnsNullWhenMissingRepoName() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "myworkspace"
+
+        backlogService.projectKey = "PROJ"
+        backlogService.repoName = ""
+
+        assertNull(backlogService.getPullRequestUrl(project, 123L))
+    }
+
+    fun testGetPullRequestUrlReturnsNullWhenMissingProjectKey() {
+        val settings = MyPluginSettingsState.getInstance(project)
+        settings.workspaceName = "myworkspace"
+
+        backlogService.projectKey = ""
+        backlogService.repoName = "repo"
+
+        assertNull(backlogService.getPullRequestUrl(project, 123L))
+    }
+
+    // --- getImageAttachments tests ---
 
     fun testGetImageAttachmentsWhenReady() {
         val mockAttachmentData = mockk<AttachmentData>()
