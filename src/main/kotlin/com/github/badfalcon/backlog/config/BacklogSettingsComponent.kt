@@ -1,32 +1,36 @@
 package com.github.badfalcon.backlog.config
 
+import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.Timer
 
 
 /**
  * Supports creating and managing a [JPanel] for the Settings Dialog.
  */
-class BacklogSettingsComponent(private var project: Project) {
+class BacklogSettingsComponent(private val project: Project) {
     val panel: DialogPanel
     private val myWorkspaceNameText = JBTextField()
-    private val myApiKeyText = JBTextField()
+    private val myApiKeyText = JBPasswordField()
     private val myProjectNameText = JBTextField()
-    private val comboBox = ComboBox(BacklogService.TopLevelDomain.values().map { it.value }.toTypedArray())
+    private val comboBox = ComboBox(BacklogService.TopLevelDomain.entries.map { it.value }.toTypedArray())
 
-    private val myInputCheckButton = JButton("run")
+    private val myInputCheckButton = JButton(BacklogBundle.message("settings.validate.button"))
     private val myInputStatusCheckLabel = JBLabel()
+    private var statusDismissTimer: Timer? = null
 
     init {
         setupButtonAction()
@@ -34,20 +38,21 @@ class BacklogSettingsComponent(private var project: Project) {
             row {
                 cell(JBLabel("Backlog")).bold()
             }
-            group("Backlog Settings") {
-                row("workspace info: ") {
-                    cell (JBLabel("https://")).gap(RightGap.SMALL)
+            group(BacklogBundle.message("settings.group.title")) {
+                row(BacklogBundle.message("settings.workspace.label")) {
+                    @Suppress("DialogTitleCapitalization")
+                    cell(JBLabel("https://")).gap(RightGap.SMALL)
                     cell(myWorkspaceNameText).gap(RightGap.SMALL)
-                    cell (JBLabel(".backlog.")).gap(RightGap.SMALL)
-                    cell (comboBox)
+                    cell(JBLabel(".backlog.")).gap(RightGap.SMALL)
+                    cell(comboBox)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("api key: ") {
+                row(BacklogBundle.message("settings.apiKey.label")) {
                     cell(myApiKeyText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("project name: ") {
+                row(BacklogBundle.message("settings.projectName.label")) {
                     cell(myProjectNameText).resizableColumn().align(AlignX.FILL)
                 }.layout(RowLayout.LABEL_ALIGNED)
-                row("Check Valid: ") {
+                row(BacklogBundle.message("settings.validate.label")) {
                     cell(myInputCheckButton)
                     cell(myInputStatusCheckLabel)
                 }.layout(RowLayout.LABEL_ALIGNED)
@@ -67,7 +72,7 @@ class BacklogSettingsComponent(private var project: Project) {
         }
 
     var apiKeyText: String
-        get() = myApiKeyText.text
+        get() = String(myApiKeyText.password)
         set(newText) {
             myApiKeyText.text = newText
         }
@@ -81,7 +86,8 @@ class BacklogSettingsComponent(private var project: Project) {
     var topLevelDomain: BacklogService.TopLevelDomain
         get() {
             val selectedValue = comboBox.selectedItem as String
-            return BacklogService.TopLevelDomain.values().first { it.value == selectedValue }
+            return BacklogService.TopLevelDomain.entries.firstOrNull { it.value == selectedValue }
+                ?: BacklogService.TopLevelDomain.COM
         }
         set(newSelection) {
             comboBox.selectedItem = newSelection.value
@@ -89,32 +95,59 @@ class BacklogSettingsComponent(private var project: Project) {
 
     private fun setupButtonAction() {
         myInputCheckButton.addActionListener {
-            if(workspaceNameText != "" && apiKeyText != ""){
-                // check if the values are valid
-                val backlogService = project.service<BacklogService>()
-                val config = backlogService.isValidBacklogConfigs(workspaceNameText, apiKeyText, topLevelDomain)
-                val isValid : Boolean = config != null
+            if (workspaceNameText.isNotEmpty() && apiKeyText.isNotEmpty()) {
+                myInputCheckButton.isEnabled = false
+                myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.checking")
+                myInputStatusCheckLabel.foreground = JBColor.foreground()
+                myInputStatusCheckLabel.isVisible = true
 
-                updateStatus(isValid)
-                if ( isValid){
+                val backlogService = project.getService(BacklogService::class.java)
+                val workspace = workspaceNameText
+                val apiKey = apiKeyText
+                val tld = topLevelDomain
 
-                    val messageBus = project.messageBus
-                    val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
-                    publisher.update("button Action")
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    try {
+                        backlogService.validateBacklogConfigs(workspace, apiKey, tld)
+                        ApplicationManager.getApplication().invokeLater {
+                            updateStatus(true)
+                            val messageBus = project.messageBus
+                            val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
+                            publisher.update("button Action")
+                        }
+                    } catch (e: Exception) {
+                        ApplicationManager.getApplication().invokeLater {
+                            updateStatus(false, e.message)
+                        }
+                    }
                 }
             }
         }
     }
 
-    private fun updateStatus(success: Boolean) {
+    private fun updateStatus(success: Boolean, errorMessage: String? = null) {
+        myInputCheckButton.isEnabled = true
         if (success) {
-            myInputStatusCheckLabel.text = "Success"
+            myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.success")
             myInputStatusCheckLabel.foreground = JBColor.GREEN
         } else {
-            myInputStatusCheckLabel.text = "Failure"
+            val detail = errorMessage ?: BacklogBundle.message("error.unknown")
+            myInputStatusCheckLabel.text = BacklogBundle.message("settings.validation.failure", detail)
             myInputStatusCheckLabel.foreground = JBColor.RED
         }
         myInputStatusCheckLabel.isVisible = true
-        // todo set the status text disappear by time
+
+        statusDismissTimer?.stop()
+        statusDismissTimer = Timer(5000) {
+            myInputStatusCheckLabel.isVisible = false
+            myInputStatusCheckLabel.text = ""
+        }.apply {
+            isRepeats = false
+            start()
+        }
+    }
+
+    fun dispose() {
+        statusDismissTimer?.stop()
     }
 }

@@ -16,9 +16,15 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
-class GitService(private var project: Project) {
+class GitService(private val project: Project, cs: CoroutineScope) {
+    companion object {
+        val BACKLOG_URL_REGEX = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
+    }
     var repository: GitRepository? = null
     val isReady: Boolean get() = repository != null
 
@@ -27,6 +33,9 @@ class GitService(private var project: Project) {
         project.messageBus.connect().subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
             checkRepositoryReady()
         })
+        cs.launch(Dispatchers.IO) {
+            checkRepositoryReady()
+        }
     }
 
     fun checkRepositoryReady() {
@@ -77,13 +86,9 @@ class GitService(private var project: Project) {
         var result: String? = null
         if (isReady) {
             for (remote in repository!!.remotes) {
-                if (remote.firstUrl == null) {
-                    continue
-                }
-                println(remote.firstUrl)
-                val backlogUrlRegex = Regex("https://.+backlog\\.(jp|com)/git/.+/.+\\.git")
-                if (backlogUrlRegex.containsMatchIn(remote.firstUrl!!)) {
-                    result = remote.firstUrl
+                val url = remote.firstUrl ?: continue
+                if (BACKLOG_URL_REGEX.containsMatchIn(url)) {
+                    result = url
                     break
                 }
             }
@@ -94,8 +99,8 @@ class GitService(private var project: Project) {
     fun getChanges(baseBranchName: String, targetBranchName: String): MutableCollection<Change>? {
         thisLogger().warn("[backlog] " + "GitService.getChanges")
         if (isReady) {
-            val base = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == baseBranchName }
-            val target = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == targetBranchName }
+            val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
+            val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }
 
             if (base != null && target != null) {
                 // get revisions
@@ -116,8 +121,8 @@ class GitService(private var project: Project) {
     fun getCommits(baseBranchName: String, targetBranchName: String): MutableList<GitCommit>? {
         thisLogger().warn("[backlog] " + "GitService.getCommits")
         if (isReady) {
-            val base = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == baseBranchName }
-            val target = repository!!.branches.remoteBranches.first { it.nameForRemoteOperations == targetBranchName }
+            val base = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == baseBranchName }
+            val target = repository!!.branches.remoteBranches.firstOrNull { it.nameForRemoteOperations == targetBranchName }
 
             if (base != null && target != null) {
                return GitHistoryUtils.history(

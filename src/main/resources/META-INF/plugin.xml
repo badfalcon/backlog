@@ -23,5 +23,6 @@
                 displayName="Backlog"
                 nonDefaultProject="false"/>
 
+        <notificationGroup id="Backlog" displayType="BALLOON"/>
     </extensions>
 </idea-plugin>

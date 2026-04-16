@@ -2,6 +2,7 @@ package com.github.badfalcon.backlog.tabs
 
 import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.util.BacklogMarkdownConverter
+import com.github.badfalcon.backlog.util.TableUtils
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.ui.components.JBPanel
@@ -18,7 +19,6 @@ import com.nulabinc.backlog4j.PullRequestComment
 import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 import java.awt.BorderLayout
-import java.awt.Component
 import java.text.SimpleDateFormat
 import javax.swing.BoxLayout
 import javax.swing.JButton
@@ -26,7 +26,6 @@ import javax.swing.JTable
 import javax.swing.JTextArea
 import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableModel
-import javax.swing.table.TableCellRenderer
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -42,27 +41,30 @@ class BacklogPRDetailTab(
     attachmentData: MutableList<AttachmentData>,
     comments: ResponseList<PullRequestComment>?,
     private val commentPostListener: CommentPostListener,
-    private val statusChangeListener: StatusChangeListener
+    private val statusChangeListener: StatusChangeListener,
+    prUrl: String? = null
 ) : JBPanel<JBPanel<*>>()  {
     private val basePath = Path(basePathStr?:"")
     private lateinit var tabbedPane: JBTabbedPane
 
     init {
-        println("BacklogPRDetailTab init")
         this.layout = BorderLayout()
 
         // create overview
         val overviewPanel = panel {
             row("#" + pullRequest.number.toString()) {
                 label(pullRequest.summary)
+                if (prUrl != null) {
+                    browserLink(BacklogBundle.message("prDetail.overview.openInBacklog"), prUrl)
+                }
             }
-            row("author") {
+            row(BacklogBundle.message("prDetail.overview.author")) {
                 label(pullRequest.createdUser.name)
             }
-            row("branch") {
-                label (pullRequest.base.toString() + " <- " + pullRequest.branch.toString())
+            row(BacklogBundle.message("prDetail.overview.branch")) {
+                label(pullRequest.base.toString() + " <- " + pullRequest.branch.toString())
             }
-            row(BacklogBundle.message("overviewStatus")) {
+            row(BacklogBundle.message("prDetail.overview.status")) {
                 label(pullRequest.status.name)
             }
         }
@@ -71,13 +73,13 @@ class BacklogPRDetailTab(
         val statusPanel = JBPanel<JBPanel<*>>()
         when (pullRequest.status.status) {
             PullRequest.StatusType.Open -> {
-                val closeButton = JButton(BacklogBundle.message("statusClose"))
+                val closeButton = JButton(BacklogBundle.message("prDetail.status.close"))
                 closeButton.addActionListener {
                     closeButton.isEnabled = false
                     statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Closed)
                 }
                 statusPanel.add(closeButton)
-                val mergeButton = JButton(BacklogBundle.message("statusMerge"))
+                val mergeButton = JButton(BacklogBundle.message("prDetail.status.merge"))
                 mergeButton.addActionListener {
                     mergeButton.isEnabled = false
                     statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Merged)
@@ -85,7 +87,7 @@ class BacklogPRDetailTab(
                 statusPanel.add(mergeButton)
             }
             PullRequest.StatusType.Closed -> {
-                val reopenButton = JButton(BacklogBundle.message("statusReopen"))
+                val reopenButton = JButton(BacklogBundle.message("prDetail.status.reopen"))
                 reopenButton.addActionListener {
                     reopenButton.isEnabled = false
                     statusChangeListener.onStatusChange(pullRequest, PullRequest.StatusType.Open)
@@ -96,33 +98,31 @@ class BacklogPRDetailTab(
         }
 
         // create description
-        val htmlPanel =  BacklogHtmlPanel(pullRequest.description, attachments, attachmentData)
+        val htmlPanel = BacklogHtmlPanel(pullRequest.description, attachments, attachmentData)
         val pullRequestPanel = panel {
-            row { cell(htmlPanel) }
+            row { cell(htmlPanel).align(Align.FILL) }
         }
         val prpScrollPane = JBScrollPane(pullRequestPanel)
 
         // create changes
         val changesTable = createChangesTable(changes, diffSelectionListener)
-        val changesPanel = JBScrollPane(changesTable)
-        val chScrollPane = JBScrollPane(changesPanel)
+        val changesScrollPane = JBScrollPane(changesTable)
 
         // create commits
         val commitsTable = createCommitsTable(commits, commitSelectionListener)
-        val commitsPanel = JBScrollPane(commitsTable)
-        val cmScrollPane = JBScrollPane(commitsPanel)
+        val commitsScrollPane = JBScrollPane(commitsTable)
 
         // create tabbed pane
         tabbedPane = JBTabbedPane()
-        tabbedPane.addTab("Pull Request Details", null, prpScrollPane, "Details of the Pull Request")
-        tabbedPane.addTab("File Changes", null, chScrollPane, "List of file changes")
-        tabbedPane.addTab("Commits", null, cmScrollPane, "List of commits")
-        tabbedPane.addTab(BacklogBundle.message("tabComments"), null, createCommentsPanel(comments), "Pull request comments")
+        tabbedPane.addTab(BacklogBundle.message("prDetail.tab.description"), null, prpScrollPane, BacklogBundle.message("prDetail.tab.description.tooltip"))
+        tabbedPane.addTab(BacklogBundle.message("prDetail.tab.changes"), null, changesScrollPane, BacklogBundle.message("prDetail.tab.changes.tooltip"))
+        tabbedPane.addTab(BacklogBundle.message("prDetail.tab.commits"), null, commitsScrollPane, BacklogBundle.message("prDetail.tab.commits.tooltip"))
+        tabbedPane.addTab(BacklogBundle.message("prDetail.tab.comments"), null, createCommentsPanel(comments), BacklogBundle.message("prDetail.tab.comments.tooltip"))
 
         // create main panel
         val mainPanel = panel {
             row {
-                cell(overviewPanel)
+                cell(overviewPanel).align(Align.FILL)
             }
             row {
                 cell(statusPanel)
@@ -163,7 +163,7 @@ class BacklogPRDetailTab(
         textArea.wrapStyleWord = true
         inputPanel.add(JBScrollPane(textArea), BorderLayout.CENTER)
 
-        val postButton = JButton(BacklogBundle.message("commentPostButton"))
+        val postButton = JButton(BacklogBundle.message("prDetail.comments.postButton"))
         postButton.addActionListener {
             val content = textArea.text.trim()
             if (content.isNotEmpty()) {
@@ -186,10 +186,10 @@ class BacklogPRDetailTab(
     }
 
     private fun createChangesTable(changes: MutableCollection<Change>?, diffSelectionListener: DiffSelectionListener): JBTable {
-        val columnNames = arrayOf("File Status", "File Name")
+        val columnNames = arrayOf(BacklogBundle.message("prDetail.changes.column.status"), BacklogBundle.message("prDetail.changes.column.fileName"))
         val data = changes?.map {
             arrayOf(it.fileStatus.toString(), getFileName(it))
-        }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
+        }?.toTypedArray() ?: emptyArray()
 
         val tableModel = object : DefaultTableModel(data, columnNames) {
             override fun isCellEditable(row: Int, column: Int): Boolean {
@@ -197,29 +197,29 @@ class BacklogPRDetailTab(
             }
         }
         val changesTable = JBTable(tableModel)
+        changesTable.emptyText.text = BacklogBundle.message("prDetail.changes.empty")
 
         changesTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
-
-                val lsm : ListSelectionModel = e.source as ListSelectionModel
+                val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    val change = changes!!.elementAt(selectedRow)
+                    val change = changes?.elementAt(selectedRow) ?: return@addListSelectionListener
                     diffSelectionListener.onDiffSelected(change)
                 }
             }
         }
 
-        autoResizeTableColumns(changesTable)
+        TableUtils.autoResizeTableColumns(changesTable)
 
         return changesTable
     }
 
     private fun createCommitsTable(commits: MutableList<GitCommit>?, commitSelectionListener: CommitSelectionListener): JBTable {
-        val columnNames = arrayOf("Commit Hash", "Commit Message")
+        val columnNames = arrayOf(BacklogBundle.message("prDetail.commits.column.hash"), BacklogBundle.message("prDetail.commits.column.message"))
         val data = commits?.map {
             arrayOf(it.id.toShortString(), it.fullMessage)
-        }?.toTypedArray() ?: arrayOf(arrayOf("", ""))
+        }?.toTypedArray() ?: emptyArray()
 
         val tableModel = object : DefaultTableModel(data, columnNames) {
             override fun isCellEditable(row: Int, column: Int): Boolean {
@@ -227,19 +227,21 @@ class BacklogPRDetailTab(
             }
         }
         val commitsTable = JBTable(tableModel)
+        commitsTable.emptyText.text = BacklogBundle.message("prDetail.commits.empty")
         commitsTable.autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
 
         commitsTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
-                val lsm : ListSelectionModel = e.source as ListSelectionModel
+                val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    commitSelectionListener.onCommitSelected(commits!![selectedRow])
+                    val commit = commits?.getOrNull(selectedRow) ?: return@addListSelectionListener
+                    commitSelectionListener.onCommitSelected(commit)
                 }
             }
         }
 
-        autoResizeTableColumns(commitsTable)
+        TableUtils.autoResizeTableColumns(commitsTable)
 
         return commitsTable
     }
@@ -253,23 +255,6 @@ class BacklogPRDetailTab(
 
         val relativePath = fullPath.relativeTo(basePath)
         return relativePath.pathString
-    }
-
-    private fun autoResizeTableColumns(table: JBTable) {
-        val header = table.tableHeader
-        val columnModel = table.columnModel
-        for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
-                .getTableCellRendererComponent(table, header.getColumnModel().getColumn(column).getHeaderValue(), false, false, -1, column)
-                .preferredSize.width
-            for (row in 0 until table.rowCount) {
-                val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)
-                val cellComponent: Component = table.prepareRenderer(cellRenderer, row, column)
-                val cellWidth: Int = cellComponent.preferredSize.width
-                maxWidth = maxOf(maxWidth, cellWidth)
-            }
-            columnModel.getColumn(column).preferredWidth = maxWidth + 20 // マージンを追加
-        }
     }
 
 }

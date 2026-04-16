@@ -3,7 +3,9 @@
 .qodana
 build
 .intellijPlatform
+.kotlin
+.claude
 
-# singing
+# signing
 *.pem
 *.crt

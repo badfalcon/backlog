@@ -1,47 +1,67 @@
 package com.github.badfalcon.backlog.tabs
 
+import com.github.badfalcon.backlog.BacklogBundle
 import com.github.badfalcon.backlog.notifier.UPDATE_TOPIC
 import com.github.badfalcon.backlog.service.BacklogService
 import com.github.badfalcon.backlog.service.GitService
-import com.intellij.openapi.components.service
+import com.github.badfalcon.backlog.util.TableUtils
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.JBColor
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
 import com.nulabinc.backlog4j.PullRequest
 import com.nulabinc.backlog4j.ResponseList
 import java.awt.BorderLayout
-import java.awt.Component
 import javax.swing.JButton
 import javax.swing.ListSelectionModel
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 import javax.swing.table.DefaultTableModel
-import javax.swing.table.TableCellRenderer
 
-class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelectionListener) : JBPanel<JBPanel<*>>() {
+class BacklogHomeTab(
+    private val project: Project,
+    parentDisposable: Disposable,
+    private val pullRequestSelectionListener: PullRequestSelectionListener
+) : JBPanel<JBPanel<*>>() {
 
-    val reloadButton: JButton = JButton("reload")
-    val statusLabel: JBLabel = JBLabel()
+    private val reloadButton: JButton = JButton(BacklogBundle.message("homeTab.reload")).apply {
+        icon = AllIcons.Actions.Refresh
+    }
+    private val statusLabel: JBLabel = JBLabel()
+    private val searchField: SearchTextField = SearchTextField()
+    private val tableLoadingPanel: JBLoadingPanel = JBLoadingPanel(BorderLayout(), parentDisposable)
 
-    var pullRequestTable: JBTable = JBTable(createTableModel(null))
+    private val pullRequestTable: JBTable = JBTable(createTableModel(null))
 
-    var pullRequests: ResponseList<PullRequest>? = null
+    private var pullRequests: ResponseList<PullRequest>? = null
+    private var filteredPullRequests: List<PullRequest>? = null
 
     init {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.init")
+        thisLogger().warn("[backlog] BacklogHomeTab.init")
+        layout = BorderLayout()
+
         // create pull request selection table
         pullRequestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        pullRequestTable.emptyText.text = BacklogBundle.message("homeTab.table.empty")
         // set selection listener
         pullRequestTable.selectionModel.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
                 val lsm: ListSelectionModel = e.source as ListSelectionModel
                 if (!lsm.isSelectionEmpty) {
                     val selectedRow = lsm.minSelectionIndex
-                    pullRequestSelectionListener.onPullRequestSelected(this.pullRequests!![selectedRow])
+                    val pr = this.filteredPullRequests?.getOrNull(selectedRow) ?: return@addListSelectionListener
+                    pullRequestSelectionListener.onPullRequestSelected(pr)
                 }
             }
         }
@@ -51,112 +71,131 @@ class BacklogHomeTab(private val pullRequestSelectionListener: PullRequestSelect
             addActionListener {
                 reloadButton.isEnabled = false
                 pullRequestTable.isEnabled = false
-                statusLabel.text = "reloading"
+                statusLabel.text = BacklogBundle.message("homeTab.status.reloading")
+                statusLabel.icon = AnimatedIcon.Default()
+                tableLoadingPanel.startLoading()
 
                 // update window
-                val project = ProjectManager.getInstance().openProjects[0]
                 val messageBus = project.messageBus
                 val publisher = messageBus.syncPublisher(UPDATE_TOPIC)
                 publisher.update("reload")
             }
         }
-        val pullRequests: ResponseList<PullRequest>? = null
-        this.update(pullRequests)
 
-        this.layout = BorderLayout()
-        reload(false)
+        // setup search field filter
+        searchField.textEditor.emptyText.text = BacklogBundle.message("homeTab.search.placeholder")
+        searchField.addDocumentListener(object : DocumentListener {
+            override fun insertUpdate(e: DocumentEvent?) = filterPullRequests()
+            override fun removeUpdate(e: DocumentEvent?) = filterPullRequests()
+            override fun changedUpdate(e: DocumentEvent?) = filterPullRequests()
+        })
+
+        // setup table loading panel (CENTER)
+        tableLoadingPanel.add(JBScrollPane(pullRequestTable), BorderLayout.CENTER)
+        add(tableLoadingPanel, BorderLayout.CENTER)
+
+        // build toolbar (NORTH)
+        rebuildToolbar()
+
+        // start loading on initial fetch
+        tableLoadingPanel.startLoading()
     }
 
     fun getContent() = this
 
-    fun reload(updateFinish: Boolean = false) {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.reload")
-        removeAll()
-        val scrollableTable = JBScrollPane(pullRequestTable)
-        // get project
-        val project = ProjectManager.getInstance().openProjects[0]
-        // backlogがisReadyならばreadyと表示
-        val backlogReady : Boolean = project.service<BacklogService>().isReady
-        // gitがisReadyならばreadyと表示
-        val gitReady  : Boolean = project.service<GitService>().isReady
-        val mainPanel = panel {
+    private fun rebuildToolbar() {
+        val backlogReady: Boolean = project.getService(BacklogService::class.java).isReady
+        val gitReady: Boolean = project.getService(GitService::class.java).isReady
+
+        val gitStatusIcon = if (gitReady) AllIcons.General.InspectionsOK else AllIcons.General.Error
+        val backlogStatusIcon = if (backlogReady) AllIcons.General.InspectionsOK else AllIcons.General.Error
+
+        val toolbarPanel = panel {
             row {
                 cell(JBLabel("Git"))
-                cell(JBLabel(if(gitReady) "ready" else "not ready"))
+                cell(JBLabel(if (gitReady) BacklogBundle.message("homeTab.status.ready") else BacklogBundle.message("homeTab.status.notReady"), gitStatusIcon, JBLabel.LEFT))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(JBLabel("Backlog"))
-                cell(JBLabel(if(backlogReady) "ready" else "not ready"))
+                cell(JBLabel(if (backlogReady) BacklogBundle.message("homeTab.status.ready") else BacklogBundle.message("homeTab.status.notReady"), backlogStatusIcon, JBLabel.LEFT))
             }.layout(RowLayout.LABEL_ALIGNED)
             row {
                 cell(reloadButton)
                 cell(statusLabel)
             }
-
             row {
-                cell(scrollableTable).align(Align.FILL)
-            }.resizableRow()
+                cell(searchField).align(AlignX.FILL)
+            }
         }
-        add(mainPanel, BorderLayout.CENTER)
 
-        if (updateFinish) {
-            statusLabel.text = ""
-            reloadButton.isEnabled = true
-            pullRequestTable.isEnabled = true
+        // replace NORTH component
+        (layout as BorderLayout).getLayoutComponent(BorderLayout.NORTH)?.let { remove(it) }
+        add(toolbarPanel, BorderLayout.NORTH)
+    }
 
-        }
-        // update window
+    fun update(pullRequests: ResponseList<PullRequest>?) {
+        thisLogger().warn("[backlog] BacklogHomeTab.update")
+        this.pullRequests = pullRequests
+        this.filteredPullRequests = pullRequests?.toList()
+        searchField.text = ""
+        pullRequestTable.model = createTableModel(this.filteredPullRequests)
+        TableUtils.autoResizeTableColumns(pullRequestTable)
+        pullRequestTable.isEnabled = true
+
+        // update toolbar (ready status may have changed)
+        rebuildToolbar()
+
+        // stop loading
+        statusLabel.text = ""
+        statusLabel.icon = null
+        statusLabel.foreground = JBColor.foreground()
+        reloadButton.isEnabled = true
+        tableLoadingPanel.stopLoading()
+
         revalidate()
         repaint()
     }
 
-    fun update(pullRequests: ResponseList<PullRequest>?) {
-        thisLogger().warn("[backlog] " + "BacklogHomeTab.update")
-        this.pullRequests = pullRequests
-        pullRequestTable.model = createTableModel(this.pullRequests)
-
-        // auto resize columns
-        autoResizeTableColumns(pullRequestTable)
-
+    fun showError(message: String) {
+        statusLabel.text = BacklogBundle.message("homeTab.status.error", message)
+        statusLabel.foreground = JBColor.RED
+        statusLabel.icon = null
+        reloadButton.isEnabled = true
         pullRequestTable.isEnabled = true
-
-        reload(true)
+        tableLoadingPanel.stopLoading()
     }
 
-    private fun createTableModel(pullRequests: ResponseList<PullRequest>?): DefaultTableModel {
-        val columnNames = arrayOf("#", "title", "author", "branch")
+    private fun filterPullRequests() {
+        val query = searchField.text.lowercase()
+        filteredPullRequests = if (query.isBlank()) {
+            pullRequests?.toList()
+        } else {
+            pullRequests?.filter {
+                it.summary.lowercase().contains(query) ||
+                        it.createdUser.name.lowercase().contains(query) ||
+                        it.branch.lowercase().contains(query) ||
+                        it.number.toString().contains(query)
+            }
+        }
+        pullRequestTable.model = createTableModel(filteredPullRequests)
+        TableUtils.autoResizeTableColumns(pullRequestTable)
+    }
+
+    private fun createTableModel(pullRequests: List<PullRequest>?): DefaultTableModel {
+        val columnNames = arrayOf(
+            "#",
+            BacklogBundle.message("homeTab.column.title"),
+            BacklogBundle.message("homeTab.column.author"),
+            BacklogBundle.message("homeTab.column.branch")
+        )
         val data = pullRequests?.map {
             arrayOf(it.number.toString(), it.summary, it.createdUser.name, it.branch.toString())
-        }?.toTypedArray() ?: arrayOf(arrayOf("", "", "", ""))
+        }?.toTypedArray() ?: emptyArray()
 
         return object : DefaultTableModel(data, columnNames) {
             override fun isCellEditable(row: Int, column: Int): Boolean {
                 return false
             }
-        }
-    }
-
-    private fun autoResizeTableColumns(table: JBTable) {
-        val header = table.tableHeader
-        val columnModel = table.columnModel
-        for (column in 0 until columnModel.columnCount) {
-            var maxWidth = header.getDefaultRenderer()
-                .getTableCellRendererComponent(
-                    table,
-                    header.getColumnModel().getColumn(column).getHeaderValue(),
-                    false,
-                    false,
-                    -1,
-                    column
-                )
-                .preferredSize.width
-            for (row in 0 until table.rowCount) {
-                val cellRenderer: TableCellRenderer = table.getCellRenderer(row, column)
-                val cellComponent: Component = table.prepareRenderer(cellRenderer, row, column)
-                val cellWidth: Int = cellComponent.preferredSize.width
-                maxWidth = maxOf(maxWidth, cellWidth)
-            }
-            columnModel.getColumn(column).preferredWidth = maxWidth + 20 // マージンを追加
         }
     }
 }

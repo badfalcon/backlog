@@ -1,7 +1,6 @@
 package com.github.badfalcon.backlog.service
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -12,14 +11,14 @@ import com.nulabinc.backlog4j.ResponseList
 import git4idea.GitCommit
 
 @Service(Service.Level.PROJECT)
-class PullRequestService(private var project: Project) {
+class PullRequestService(project: Project) {
     var backlogService: BacklogService
     var gitService: GitService
-    val isReady: Boolean get() = backlogService?.isReady == true && gitService?.isReady == true
+
     init {
         thisLogger().warn("[backlog] "+"PullRequestService.init")
-        backlogService = project.service<BacklogService>()
-        gitService = project.service<GitService>()
+        backlogService = project.getService(BacklogService::class.java)
+        gitService = project.getService(GitService::class.java)
     }
 
     fun getPullRequests(): ResponseList<PullRequest>? {
@@ -27,9 +26,12 @@ class PullRequestService(private var project: Project) {
         var result : ResponseList<PullRequest>? = null
         if (backlogService.isReady && gitService.isReady) {
             gitService.fetch()
-            thisLogger().warn("[BLPL]invokeLater")
             val remoteUrl = gitService.getRemoteUrl()
-            result = backlogService.getPullRequests(remoteUrl!!)
+            if (remoteUrl == null) {
+                thisLogger().warn("[backlog] No Backlog remote URL found")
+                return null
+            }
+            result = backlogService.getPullRequests(remoteUrl)
         }
         return result
     }
