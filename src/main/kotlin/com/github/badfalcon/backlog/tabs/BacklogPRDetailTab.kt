@@ -148,7 +148,8 @@ class BacklogPRDetailTab(
                     label(dateFormat.format(comment.created))
                 }
                 row {
-                    text(comment.content ?: "")
+                    val commentHtml = BacklogHtmlPanel(comment.content ?: "", null, mutableListOf())
+                    cell(commentHtml).align(Align.FILL)
                 }
                 separator()
             }
