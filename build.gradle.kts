@@ -3,6 +3,7 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareTestTask
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 
 plugins {
     id("java") // Java support
@@ -65,6 +66,12 @@ configurations.testRuntimeClasspath {
 // Set the JVM language level used to build the project.
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        // Generate real JVM default interface methods instead of synthetic compatibility
+        // bridges. Without this, implementing IntelliJ interfaces (e.g. ToolWindowFactory)
+        // emits bridge methods that the Plugin Verifier flags as @ApiStatus.Internal usage.
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
+    }
 }
 
 // Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
