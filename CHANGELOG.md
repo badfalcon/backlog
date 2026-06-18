@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Plugin Verifier で警告される内部 API の使用を回避 (#146)
+
 ## [0.3.0] - 2026-04-16
 
 ### Added
