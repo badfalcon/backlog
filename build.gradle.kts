@@ -50,7 +50,7 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
     }
 
-    implementation("com.nulab-inc:backlog4j:2.9.0")
+    implementation("com.nulab-inc:backlog4j:2.10.0")
 
     testImplementation("org.opentest4j:opentest4j:1.3.0")
 }
